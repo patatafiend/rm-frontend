@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wellness App",
-  description: "Wellness management platform",
+  title: "Requirements Monitoring",
+  description: "Requirements Monitoring Platform",
 };
 
 export default function RootLayout({
