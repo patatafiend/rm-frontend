@@ -47,9 +47,7 @@ const dashBoardSideBar: SideBarItem[] = [
   {
     icon: LayoutDashboard,
     sideBarMenuButtonTitle: "Employee",
-    sideBarMenuSubItems: [
-      { title: "List", url: "/client/dashboard/employee-list" },
-    ],
+    sideBarMenuSubItems: [{ title: "List", url: "/dashboard/employee-list" }],
   },
 ];
 
@@ -58,9 +56,9 @@ const adminSidebar: SideBarItem[] = [
     icon: Users,
     sideBarMenuButtonTitle: "Users",
     sideBarMenuSubItems: [
-      { title: "List", url: "/client/admin/user-list" },
-      { title: "Roles", url: "/client/admin/user-roles" },
-      { title: "Permissions", url: "/client/admin/user-permissions" },
+      { title: "List", url: "/admin/user-list" },
+      { title: "Roles", url: "/admin/user-roles" },
+      { title: "Permissions", url: "/admin/user-permissions" },
     ],
   },
 ];
