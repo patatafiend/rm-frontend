@@ -1,7 +1,17 @@
 "use client";
 
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon, Search, X, SlidersHorizontal, RefreshCcw } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -9,14 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { useEmployeeRequirements } from "@/hooks/admin/useEmployeeRequirements";
 import type {
   DaysSinceHireFilter,
   DocumentFilter,
 } from "@/store/employee-requirements.store";
-import { RefreshCcw } from "lucide-react";
 
 export function EmployeeRequirementsFilters() {
   const {
@@ -38,6 +46,26 @@ export function EmployeeRequirementsFilters() {
   const companies = getUniqueCompanies();
   const statuses = getUniqueEmpStatuses();
   const { refetch, isRefetching } = useEmployeeRequirements();
+
+  // Sync the Calendar's DateRange state with the store
+  const dateRange: DateRange | undefined =
+    filters.dateRange.start || filters.dateRange.end
+      ? {
+          from: filters.dateRange.start
+            ? new Date(filters.dateRange.start)
+            : undefined,
+          to: filters.dateRange.end
+            ? new Date(filters.dateRange.end)
+            : undefined,
+        }
+      : undefined;
+
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setDateRangeFilter(
+      range?.from ? format(range.from, "yyyy-MM-dd") : null,
+      range?.to ? format(range.to, "yyyy-MM-dd") : null,
+    );
+  };
 
   const hasActiveFilters =
     filters.searchTerm ||
@@ -67,10 +95,9 @@ export function EmployeeRequirementsFilters() {
             disabled={isRefetching}
             className="h-7 px-2.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 gap-1.5 transition-colors mr-2"
           >
-            <RefreshCcw className="w-4 h-4" />
+            <RefreshCcw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`} />
             {isRefetching ? "Refreshing..." : "Refresh"}
           </Button>
-
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -87,7 +114,7 @@ export function EmployeeRequirementsFilters() {
 
       {/* Filter Body */}
       <div className="px-5 py-4 space-y-4">
-        {/* Search — full width */}
+        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <Input
@@ -98,14 +125,12 @@ export function EmployeeRequirementsFilters() {
           />
         </div>
 
-        {/* Dropdowns row */}
+        {/* Dropdowns */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FilterField label="Company">
             <Select
               value={filters.company || "all"}
-              onValueChange={(val) =>
-                setCompanyFilter(val === "all" ? null : val)
-              }
+              onValueChange={(val) => setCompanyFilter(val === "all" ? null : val)}
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue placeholder="All Companies" />
@@ -113,9 +138,7 @@ export function EmployeeRequirementsFilters() {
               <SelectContent>
                 <SelectItem value="all">All Companies</SelectItem>
                 {companies.map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
-                  </SelectItem>
+                  <SelectItem key={company} value={company}>{company}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -124,9 +147,7 @@ export function EmployeeRequirementsFilters() {
           <FilterField label="Employment Status">
             <Select
               value={filters.empStatus || "all"}
-              onValueChange={(val) =>
-                setEmpStatusFilter(val === "all" ? null : val)
-              }
+              onValueChange={(val) => setEmpStatusFilter(val === "all" ? null : val)}
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue placeholder="All Statuses" />
@@ -134,9 +155,7 @@ export function EmployeeRequirementsFilters() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {statuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -163,9 +182,7 @@ export function EmployeeRequirementsFilters() {
           <FilterField label="Days Since Hire">
             <Select
               value={filters.daysSinceHire}
-              onValueChange={(val) =>
-                setDaysSinceHireFilter(val as DaysSinceHireFilter)
-              }
+              onValueChange={(val) => setDaysSinceHireFilter(val as DaysSinceHireFilter)}
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue />
@@ -173,8 +190,8 @@ export function EmployeeRequirementsFilters() {
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="pending-start">Pending Start</SelectItem>
-                <SelectItem value="0-15">0-15 Days</SelectItem>
-                <SelectItem value="15-30">15-30 Days</SelectItem>
+                <SelectItem value="0-15">0–15 Days</SelectItem>
+                <SelectItem value="15-30">15–30 Days</SelectItem>
                 <SelectItem value="30+">30+ Days</SelectItem>
               </SelectContent>
             </Select>
@@ -196,7 +213,7 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="Pagibig">
+          <FilterField label="Pag-IBIG">
             <Select
               value={filters.pagibigNo}
               onValueChange={(val) => setPagibigNoFilter(val as DocumentFilter)}
@@ -212,7 +229,7 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="PhHealth">
+          <FilterField label="PhilHealth">
             <Select
               value={filters.phhealth}
               onValueChange={(val) => setPhealthFilter(val as DocumentFilter)}
@@ -229,36 +246,52 @@ export function EmployeeRequirementsFilters() {
           </FilterField>
         </div>
 
-        {/* Date range row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FilterField label="Contract Start - From">
-            <Input
-              type="date"
-              value={filters.dateRange.start || ""}
-              onChange={(e) =>
-                setDateRangeFilter(
-                  e.target.value || null,
-                  filters.dateRange.end,
-                )
-              }
-              className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors"
-            />
-          </FilterField>
-
-          <FilterField label="Contract Start - To">
-            <Input
-              type="date"
-              value={filters.dateRange.end || ""}
-              onChange={(e) =>
-                setDateRangeFilter(
-                  filters.dateRange.start,
-                  e.target.value || null,
-                )
-              }
-              className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors"
-            />
-          </FilterField>
-        </div>
+        {/* Date Range Picker */}
+        <FilterField label="Contract Start Date">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm bg-gray-50 border-gray-200 hover:bg-white font-normal gap-2"
+              >
+                <CalendarIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <span className="text-gray-700">
+                      {format(dateRange.from, "MMM d, yyyy")}
+                      {" — "}
+                      {format(dateRange.to, "MMM d, yyyy")}
+                    </span>
+                  ) : (
+                    <span className="text-gray-700">
+                      {format(dateRange.from, "MMM d, yyyy")}
+                    </span>
+                  )
+                ) : (
+                  <span className="text-gray-400">Pick a date range…</span>
+                )}
+                {dateRange && (
+                  <X
+                    className="w-3.5 h-3.5 text-gray-400 hover:text-red-500 ml-auto shrink-0 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDateRangeSelect(undefined);
+                    }}
+                  />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={handleDateRangeSelect}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </FilterField>
       </div>
     </div>
   );
