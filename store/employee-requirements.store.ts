@@ -279,7 +279,10 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
             !r.rm_sss_no || !r.rm_pagibig_no || !r.rm_phhealth;
 
           // Treat `pending` the same as `incomplete` for filtering purposes.
-          if (filters.reqStatus === "incomplete" || filters.reqStatus === "pending") {
+          if (
+            filters.reqStatus === "incomplete" ||
+            filters.reqStatus === "pending"
+          ) {
             return isIncomplete;
           }
 
