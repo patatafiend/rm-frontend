@@ -32,6 +32,8 @@ import {
   LayoutDashboard,
   Users,
   ChevronDown,
+  ChessKingIcon,
+  User2
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -45,7 +47,7 @@ type SideBarItem = {
 
 const dashBoardSideBar: SideBarItem[] = [
   {
-    icon: LayoutDashboard,
+    icon: User2,
     sideBarMenuButtonTitle: "Employee",
     sideBarMenuSubItems: [{ title: "List", url: "/dashboard/employee-list" }],
   },
@@ -134,7 +136,11 @@ export function PageDropDown({
       <DropdownMenuTrigger asChild className="">
         <Button variant="outline" className="w-full justify-start gap-3 h-9">
           <span className="border border-muted-foreground/30 rounded p-1">
-            <ChessQueenIcon className="h-6 w-6" />
+            {workspace === "Dashboard" ? (
+              <ChessQueenIcon className="h-6 w-6" />
+            ) : (
+              <ChessKingIcon className="h-6 w-6" />
+            )}
           </span>
           {workspace}
         </Button>
