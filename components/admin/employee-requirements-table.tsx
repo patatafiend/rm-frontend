@@ -50,7 +50,7 @@ function getMissingDocuments(employee: EmployeeRequirement): string[] {
   const missing: string[] = [];
   if (!employee.rm_sss_no) missing.push("SSS");
   if (!employee.rm_pagibig_no) missing.push("Pagibig");
-  if (!employee.rm_phhealth) missing.push("PhHealth");
+  if (!employee.rm_phhealth) missing.push("PhilHealth");
   return missing;
 }
 
