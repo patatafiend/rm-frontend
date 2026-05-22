@@ -26,7 +26,7 @@ export default function EmployeePage() {
               Employee Requirements
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              Track and manage onboarding document requirements
+              Monitor onboarding document requirements
             </p>
           </div>
         </div>

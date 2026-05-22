@@ -23,10 +23,14 @@ function calculateDaysSinceHire(hireDate: string): {
   isFuture: boolean;
   label: string;
 } {
-  const hire = new Date(hireDate);
+  const [year, month, day] = hireDate.split('-').map(Number);
+  const hire = new Date(year, month - 1, day);
+
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const diffTime = today.getTime() - hire.getTime();
-  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   const isFuture = days < 0;
   const label = isFuture ? `${Math.abs(days)}d until` : `${days}d since`;
   return { days: Math.abs(days), isFuture, label };

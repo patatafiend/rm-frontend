@@ -96,7 +96,6 @@ const initialFilters: RequirementsFilters = {
   searchTerm: "",
 };
 
-// Helper function to deduplicate employees with same rm_tran_no and erms_id
 function deduplicateEmployees(
   data: EmployeeRequirement[],
 ): EmployeeRequirement[] {
@@ -106,15 +105,13 @@ function deduplicateEmployees(
     const key = `${employee.rm_tran_no}-${employee.erms_id}`;
 
     if (seen.has(key)) {
-      // Combine minor_reqs values
       const existing = seen.get(key)!;
       const existingReqs = existing.minor_reqs || "";
       const newReqs = employee.minor_reqs || "";
 
-      // Merge requirements (keep unique values separated by semicolon)
       const combinedReqs = [existingReqs, newReqs]
         .filter(Boolean)
-        .filter((req, idx, arr) => arr.indexOf(req) === idx) // Remove duplicates
+        .filter((req, idx, arr) => arr.indexOf(req) === idx)
         .join("; ");
 
       existing.minor_reqs = combinedReqs;
@@ -124,6 +121,10 @@ function deduplicateEmployees(
   }
 
   return Array.from(seen.values());
+}
+
+function isShortTermEmployee(employee: EmployeeRequirement): boolean {
+  return employee.emp_status.trim().toUpperCase() === "SHORT TERM";
 }
 
 export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
@@ -146,7 +147,8 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
     setRequirements: (data) => {
       const { pageSize } = get();
-      const deduplicatedData = deduplicateEmployees(data);
+      const filteredData = data.filter((employee) => !isShortTermEmployee(employee));
+      const deduplicatedData = deduplicateEmployees(filteredData);
       const newTotal = deduplicatedData.length;
 
       set({
@@ -244,17 +246,14 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
       let filtered = requirements;
 
-      // Company filter
       if (filters.company) {
         filtered = filtered.filter((r) => r.hr_company === filters.company);
       }
 
-      // Employment status filter
       if (filters.empStatus) {
         filtered = filtered.filter((r) => r.emp_status === filters.empStatus);
       }
 
-      // Days since hire filter (handles both past and future hires)
       if (filters.daysSinceHire !== "all") {
         filtered = filtered.filter((r) => {
           const today = new Date();
@@ -272,13 +271,11 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
         });
       }
 
-      // Requirement status filter
       if (filters.reqStatus !== "all") {
         filtered = filtered.filter((r) => {
           const isIncomplete =
             !r.rm_sss_no || !r.rm_pagibig_no || !r.rm_phhealth;
 
-          // Treat `pending` the same as `incomplete` for filtering purposes.
           if (
             filters.reqStatus === "incomplete" ||
             filters.reqStatus === "pending"
@@ -290,7 +287,6 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
         });
       }
 
-      // Individual document filters
       if (filters.sssNo !== "all") {
         filtered = filtered.filter((r) => {
           const hasSSS = !!r.rm_sss_no;
@@ -312,7 +308,6 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
         });
       }
 
-      // Date range filter
       if (filters.dateRange.start || filters.dateRange.end) {
         filtered = filtered.filter((r) => {
           const date = new Date(r.contract_sdate);
@@ -328,7 +323,6 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
         });
       }
 
-      // Search filter
       if (filters.searchTerm) {
         const term = filters.searchTerm.toLowerCase();
         filtered = filtered.filter(
