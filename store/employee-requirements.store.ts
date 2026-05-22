@@ -147,7 +147,9 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
     setRequirements: (data) => {
       const { pageSize } = get();
-      const filteredData = data.filter((employee) => !isShortTermEmployee(employee));
+      const filteredData = data.filter(
+        (employee) => !isShortTermEmployee(employee),
+      );
       const deduplicatedData = deduplicateEmployees(filteredData);
       const newTotal = deduplicatedData.length;
 
