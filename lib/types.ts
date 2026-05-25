@@ -75,6 +75,39 @@ export interface UserSummary {
   last_name: string | null;
   account_type: string | null;
   is_blocked: boolean;
+  role_id?: number | null;
+}
+
+export interface AdminUserCreate {
+  email: string;
+  password: string;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  phone_number?: string | null;
+  profile_url?: string | null;
+  account_type:
+    | "admin_account"
+    | "user_account"
+    | "super_admin_account"
+    | "audit_account";
+  role_id?: number | null;
+  company_id?: number | null;
+  client_id?: number | null;
+  is_blocked?: boolean;
+  allow_skip_mfa?: boolean;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  account_type: string;
+  company_id: number | null;
+  client_id: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -83,6 +116,21 @@ export interface PaginatedResponse<T> {
   page_size: number;
   items: T[];
 }
+
+export type UsersListResponse = PaginatedResponse<UserSummary>;
+export type UserCreateResponse = User;
+
+export interface ClientSummary {
+  id: number;
+  client_name: string;
+  client_email: string;
+  system_type: string;
+  status: string;
+  is_blocked: boolean;
+  company_id: number;
+}
+
+export type PaginatedClients = PaginatedResponse<ClientSummary>;
 
 // --- Device ---
 export interface Device {

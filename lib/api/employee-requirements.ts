@@ -1,12 +1,7 @@
-import axios from "axios";
+import { apiClient } from "./client";
 import type { EmployeeRequirementsResponse } from "@/lib/types";
 
-const EXTERNAL_API_URL = "https://cmiitdept.com/hr/api_onboarded_minor.php";
-
-// Create a separate axios instance for external API (no auth headers, no interceptors)
-const externalApiClient = axios.create({
-  headers: { "Content-Type": "application/json" },
-});
+const EMPLOYEE_REQUIREMENTS_PATH = "/employee-requirements";
 
 export const employeeRequirementsApi = {
   fetchAll: async (
@@ -14,16 +9,10 @@ export const employeeRequirementsApi = {
     offset?: number,
   ): Promise<EmployeeRequirementsResponse> => {
     try {
-      const params = new URLSearchParams();
-      if (limit) params.append("limit", limit.toString());
-      if (offset) params.append("offset", offset.toString());
-
-      const url = params.toString()
-        ? `${EXTERNAL_API_URL}?${params.toString()}`
-        : EXTERNAL_API_URL;
-
-      const { data } =
-        await externalApiClient.get<EmployeeRequirementsResponse>(url);
+      const { data } = await apiClient.get<EmployeeRequirementsResponse>(
+        EMPLOYEE_REQUIREMENTS_PATH,
+        { params: { limit, offset } },
+      );
       return data;
     } catch (error) {
       console.error("Failed to fetch employee requirements:", error);
