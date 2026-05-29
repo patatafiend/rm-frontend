@@ -29,7 +29,6 @@ import {
 import { Button } from "./ui/button";
 import {
   ChessQueenIcon,
-  LayoutDashboard,
   Users,
   ChevronDown,
   ChessKingIcon,
@@ -60,7 +59,6 @@ const adminSidebar: SideBarItem[] = [
     sideBarMenuSubItems: [
       { title: "List", url: "/admin/user-list" },
       { title: "Roles", url: "/admin/user-roles" },
-      { title: "Permissions", url: "/admin/user-permissions" },
     ],
   },
 ];
