@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import type { EmployeeRequirement } from "@/lib/types";
+import {
+  ProcessedEmployee,
+  MinorReqStatusCache,
+} from "@/lib/utils/requirements";
 
 export type RequirementStatus = "incomplete" | "completed" | "pending" | "all";
 export type DaysSinceHireFilter =
@@ -9,6 +13,7 @@ export type DaysSinceHireFilter =
   | "15-30"
   | "30+";
 export type DocumentFilter = "all" | "provided" | "missing";
+export type MinorReqCompleteness = "complete" | "incomplete" | "all";
 export type SortField =
   | "rm_tran_no"
   | "contract_sdate"
@@ -26,12 +31,14 @@ export interface RequirementsFilters {
   phhealth: DocumentFilter;
   dateRange: { start: string | null; end: string | null };
   searchTerm: string;
+  minorReqCompleteness: MinorReqCompleteness;
+  minorReqSpecific: string | null;
 }
 
 interface EmployeeRequirementsState {
   // Data
-  requirements: EmployeeRequirement[];
-  filteredRequirements: EmployeeRequirement[];
+  requirements: ProcessedEmployee[];
+  filteredRequirements: ProcessedEmployee[];
   total: number;
   loading: boolean;
   error: string | null;
@@ -48,6 +55,9 @@ interface EmployeeRequirementsState {
 
   // Drawer
   selectedEmployee: EmployeeRequirement | null;
+
+  // Internal cache for requirement status (for performance)
+  reqStatusCache: MinorReqStatusCache;
 
   // Actions
   setRequirements: (data: EmployeeRequirement[]) => void;
@@ -68,6 +78,8 @@ interface EmployeeRequirementsState {
   setPhealthFilter: (filter: DocumentFilter) => void;
   setDateRangeFilter: (start: string | null, end: string | null) => void;
   setSearchTerm: (term: string) => void;
+  setMinorReqCompletenessFilter: (filter: MinorReqCompleteness) => void;
+  setMinorReqSpecificFilter: (req: string | null) => void;
   clearFilters: () => void;
 
   // Sort actions
@@ -94,12 +106,14 @@ const initialFilters: RequirementsFilters = {
   phhealth: "all",
   dateRange: { start: null, end: null },
   searchTerm: "",
+  minorReqCompleteness: "all",
+  minorReqSpecific: null,
 };
 
 function deduplicateEmployees(
   data: EmployeeRequirement[],
-): EmployeeRequirement[] {
-  const seen = new Map<string, EmployeeRequirement>();
+): ProcessedEmployee[] {
+  const seen = new Map<string, ProcessedEmployee>();
 
   for (const employee of data) {
     const key = `${employee.rm_tran_no}-${employee.erms_id}`;
@@ -115,8 +129,20 @@ function deduplicateEmployees(
         .join("; ");
 
       existing.minor_reqs = combinedReqs;
+      // Update the parsed list
+      existing.minor_reqs_list = combinedReqs
+        .split("; ")
+        .map((r) => r.trim())
+        .filter((r) => r !== "");
     } else {
-      seen.set(key, { ...employee });
+      const processedEmployee: ProcessedEmployee = {
+        ...employee,
+        minor_reqs_list: (employee.minor_reqs || "")
+          .split("; ")
+          .map((r) => r.trim())
+          .filter((r) => r !== ""),
+      };
+      seen.set(key, processedEmployee);
     }
   }
 
@@ -144,14 +170,18 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
     sortOrder: "desc",
 
     selectedEmployee: null,
+    reqStatusCache: new MinorReqStatusCache(),
 
     setRequirements: (data) => {
-      const { pageSize } = get();
+      const { pageSize, reqStatusCache } = get();
       const filteredData = data.filter(
         (employee) => !isShortTermEmployee(employee),
       );
       const deduplicatedData = deduplicateEmployees(filteredData);
       const newTotal = deduplicatedData.length;
+
+      // Clear cache on new data
+      reqStatusCache.clear();
 
       set({
         requirements: deduplicatedData,
@@ -211,6 +241,20 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
     setPhealthFilter: (filter) => {
       set((state) => ({ filters: { ...state.filters, phhealth: filter } }));
+      get().applyFiltersAndSort();
+    },
+
+    setMinorReqCompletenessFilter: (filter) => {
+      set((state) => ({
+        filters: { ...state.filters, minorReqCompleteness: filter },
+      }));
+      get().applyFiltersAndSort();
+    },
+
+    setMinorReqSpecificFilter: (req) => {
+      set((state) => ({
+        filters: { ...state.filters, minorReqSpecific: req },
+      }));
       get().applyFiltersAndSort();
     },
 
@@ -289,6 +333,29 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
         });
       }
 
+      // Filter by minor requirement completeness (universal requirements)
+      if (filters.minorReqCompleteness !== "all") {
+        const { reqStatusCache } = get();
+        filtered = filtered.filter((r) => {
+          const status = reqStatusCache.get(r);
+          if (filters.minorReqCompleteness === "complete") {
+            return status.complete;
+          } else if (filters.minorReqCompleteness === "incomplete") {
+            return !status.complete;
+          }
+          return true;
+        });
+      }
+
+      // Filter by specific missing requirement
+      if (filters.minorReqSpecific) {
+        const { reqStatusCache } = get();
+        filtered = filtered.filter((r) => {
+          const status = reqStatusCache.get(r);
+          return status.missing.includes(filters.minorReqSpecific!);
+        });
+      }
+
       if (filters.sssNo !== "all") {
         filtered = filtered.filter((r) => {
           const hasSSS = !!r.rm_sss_no;
@@ -364,6 +431,15 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
     getUniqueEmpStatuses: () => {
       const { requirements } = get();
       return [...new Set(requirements.map((r) => r.emp_status))].sort();
+    },
+
+    getUniqueMinorReqs: () => {
+      const { requirements } = get();
+      const allMinorReqs = requirements
+        .flatMap((r) => (r.minor_reqs ? r.minor_reqs.split("; ") : []))
+        .filter((req) => req.trim() !== "")
+        .map((req) => req.trim());
+      return [...new Set(allMinorReqs)].sort();
     },
 
     getPaginatedData: () => {

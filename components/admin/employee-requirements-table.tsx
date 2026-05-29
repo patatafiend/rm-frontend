@@ -11,8 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, ArrowUpDown, Eye } from "lucide-react";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
-import type { EmployeeRequirement } from "@/lib/types";
+import { useEmployeeRequirementsFilter } from "@/hooks/admin/useEmployeeRequirementsFilter";
+import { UNIVERSAL_REQUIRED_REQS } from "@/lib/utils/requirements";
 import type { SortField } from "@/store/employee-requirements.store";
+import type { EmployeeRequirement } from "@/lib/types";
 
 interface EmployeeRequirementsTableProps {
   onRowClick: (employee: EmployeeRequirement) => void;
@@ -23,7 +25,7 @@ function calculateDaysSinceHire(hireDate: string): {
   isFuture: boolean;
   label: string;
 } {
-  const [year, month, day] = hireDate.split('-').map(Number);
+  const [year, month, day] = hireDate.split("-").map(Number);
   const hire = new Date(year, month - 1, day);
 
   const today = new Date();
@@ -56,6 +58,20 @@ function getMissingDocuments(employee: EmployeeRequirement): string[] {
   if (!employee.rm_pagibig_no) missing.push("Pagibig");
   if (!employee.rm_phhealth) missing.push("PhilHealth");
   return missing;
+}
+
+function getMissingMinorReqs(employee: EmployeeRequirement): string[] {
+  if (!employee.minor_reqs) {
+    return UNIVERSAL_REQUIRED_REQS;
+  }
+  const provided = employee.minor_reqs
+    .split("; ")
+    .map((req) => req.trim())
+    .filter(Boolean);
+  const providedSet = new Set(provided);
+
+  // Return only the requirements that are missing (in universal list but not provided)
+  return UNIVERSAL_REQUIRED_REQS.filter((req) => !providedSet.has(req));
 }
 
 interface SortButtonProps {
@@ -100,6 +116,7 @@ export function EmployeeRequirementsTable({
 }: EmployeeRequirementsTableProps) {
   const { getPaginatedData, sortField, setSortField, sortOrder, setSortOrder } =
     useEmployeeRequirementsStore();
+  const { reqStatus: statusCache } = useEmployeeRequirementsFilter();
 
   const data = getPaginatedData();
 
@@ -165,12 +182,12 @@ export function EmployeeRequirementsTable({
               </TableHead>
               <TableHead className="py-3 px-4">
                 <span className="font-medium text-xs uppercase tracking-wide text-gray-500">
-                  Missing Docs
+                  Major Docs
                 </span>
               </TableHead>
               <TableHead className="py-3 px-4">
                 <span className="font-medium text-xs uppercase tracking-wide text-gray-500">
-                  Req Status
+                  Minor Req Docs
                 </span>
               </TableHead>
               <TableHead className="py-3 px-4 text-right">
@@ -244,9 +261,24 @@ export function EmployeeRequirementsTable({
                       </span>
                     </TableCell>
                     <TableCell className="py-3.5 px-4">
-                      <div className="flex gap-1 flex-wrap">
+                      <div className="flex gap-1 flex-wrap items-start">
                         {getMissingDocuments(employee).length === 0 ? (
-                          <span className="text-xs text-gray-400">None</span>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              reqStatus === "Incomplete"
+                                ? "bg-amber-50 text-amber-700 border-amber-100"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                reqStatus === "Incomplete"
+                                  ? "bg-amber-500"
+                                  : "bg-emerald-500"
+                              }`}
+                            />
+                            {reqStatus}
+                          </span>
                         ) : (
                           getMissingDocuments(employee).map((doc) => (
                             <span
@@ -260,22 +292,39 @@ export function EmployeeRequirementsTable({
                       </div>
                     </TableCell>
                     <TableCell className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          reqStatus === "Incomplete"
-                            ? "bg-amber-50 text-amber-700 border-amber-100"
-                            : "bg-emerald-50 text-emerald-700 border-emerald-100"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            reqStatus === "Incomplete"
-                              ? "bg-amber-500"
-                              : "bg-emerald-500"
-                          }`}
-                        />
-                        {reqStatus}
-                      </span>
+                      {(() => {
+                        const status = statusCache.get(employee.rm_tran_no);
+                        const minorReqs = getMissingMinorReqs(employee);
+                        return minorReqs.length === 0 ? (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              status?.complete
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                : "bg-amber-50 text-amber-700 border-amber-100"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                status?.complete
+                                  ? "bg-emerald-500"
+                                  : "bg-amber-500"
+                              }`}
+                            />
+                            {status?.complete ? "Complete" : "Incomplete"}
+                          </span>
+                        ) : (
+                          <div className="flex gap-1 flex-wrap">
+                            {minorReqs.map((req) => (
+                              <span
+                                key={req}
+                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-100"
+                              >
+                                {req}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="py-3.5 px-4 text-right">
                       <Button

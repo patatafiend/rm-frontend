@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Search, X, SlidersHorizontal, RefreshCcw } from "lucide-react";
+import {
+  CalendarIcon,
+  Search,
+  X,
+  SlidersHorizontal,
+  RefreshCcw,
+} from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,9 +27,11 @@ import {
 } from "@/components/ui/select";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { useEmployeeRequirements } from "@/hooks/admin/useEmployeeRequirements";
+import { useEmployeeRequirementsFilter } from "@/hooks/admin/useEmployeeRequirementsFilter";
 import type {
   DaysSinceHireFilter,
   DocumentFilter,
+  MinorReqCompleteness,
 } from "@/store/employee-requirements.store";
 
 export function EmployeeRequirementsFilters() {
@@ -38,11 +46,14 @@ export function EmployeeRequirementsFilters() {
     setPhealthFilter,
     setDateRangeFilter,
     setSearchTerm,
+    setMinorReqCompletenessFilter,
+    setMinorReqSpecificFilter,
     clearFilters,
     getUniqueCompanies,
     getUniqueEmpStatuses,
   } = useEmployeeRequirementsStore();
 
+  const { allMissingRequirements } = useEmployeeRequirementsFilter();
   const companies = getUniqueCompanies();
   const statuses = getUniqueEmpStatuses();
   const { refetch, isRefetching } = useEmployeeRequirements();
@@ -77,7 +88,9 @@ export function EmployeeRequirementsFilters() {
     filters.pagibigNo !== "all" ||
     filters.phhealth !== "all" ||
     filters.dateRange.start ||
-    filters.dateRange.end;
+    filters.dateRange.end ||
+    filters.minorReqCompleteness !== "all" ||
+    filters.minorReqSpecific;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -95,7 +108,9 @@ export function EmployeeRequirementsFilters() {
             disabled={isRefetching}
             className="h-7 px-2.5 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 gap-1.5 transition-colors mr-2"
           >
-            <RefreshCcw className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+            <RefreshCcw
+              className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`}
+            />
             {isRefetching ? "Refreshing..." : "Refresh"}
           </Button>
           {hasActiveFilters && (
@@ -130,7 +145,9 @@ export function EmployeeRequirementsFilters() {
           <FilterField label="Company">
             <Select
               value={filters.company || "all"}
-              onValueChange={(val) => setCompanyFilter(val === "all" ? null : val)}
+              onValueChange={(val) =>
+                setCompanyFilter(val === "all" ? null : val)
+              }
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue placeholder="All Companies" />
@@ -138,7 +155,48 @@ export function EmployeeRequirementsFilters() {
               <SelectContent>
                 <SelectItem value="all">All Companies</SelectItem>
                 {companies.map((company) => (
-                  <SelectItem key={company} value={company}>{company}</SelectItem>
+                  <SelectItem key={company} value={company}>
+                    {company}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Minor Req Completeness">
+            <Select
+              value={filters.minorReqCompleteness}
+              onValueChange={(val) =>
+                setMinorReqCompletenessFilter(val as MinorReqCompleteness)
+              }
+            >
+              <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="complete">Complete</SelectItem>
+                <SelectItem value="incomplete">Incomplete</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Missing Requirement">
+            <Select
+              value={filters.minorReqSpecific || "all"}
+              onValueChange={(val) =>
+                setMinorReqSpecificFilter(val === "all" ? null : val)
+              }
+            >
+              <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {allMissingRequirements.map((req) => (
+                  <SelectItem key={req} value={req}>
+                    {req}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -147,7 +205,9 @@ export function EmployeeRequirementsFilters() {
           <FilterField label="Employment Status">
             <Select
               value={filters.empStatus || "all"}
-              onValueChange={(val) => setEmpStatusFilter(val === "all" ? null : val)}
+              onValueChange={(val) =>
+                setEmpStatusFilter(val === "all" ? null : val)
+              }
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue placeholder="All Statuses" />
@@ -155,7 +215,9 @@ export function EmployeeRequirementsFilters() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {statuses.map((status) => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -182,7 +244,9 @@ export function EmployeeRequirementsFilters() {
           <FilterField label="Days Since Hire">
             <Select
               value={filters.daysSinceHire}
-              onValueChange={(val) => setDaysSinceHireFilter(val as DaysSinceHireFilter)}
+              onValueChange={(val) =>
+                setDaysSinceHireFilter(val as DaysSinceHireFilter)
+              }
             >
               <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
                 <SelectValue />
