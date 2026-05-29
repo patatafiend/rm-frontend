@@ -40,7 +40,7 @@ export default function LoginPage() {
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           <span className="text-white font-semibold text-sm tracking-wide">
-            ERMS
+            ERMP
           </span>
         </div>
 
@@ -51,7 +51,7 @@ export default function LoginPage() {
             <h2 className="text-3xl font-bold text-white leading-snug">
               Employee Requirements
               <br />
-              Monitoring System
+              Monitoring Portal
             </h2>
             <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
               Track onboarding documents and monitor compliance
@@ -60,7 +60,7 @@ export default function LoginPage() {
         </div>
 
         <p className="relative z-10 text-xs text-gray-600">
-          © {new Date().getFullYear()} ERMS · Internal use only
+          © {new Date().getFullYear()} ERMP · Internal use only
         </p>
       </div>
 
