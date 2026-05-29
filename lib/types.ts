@@ -99,6 +99,22 @@ export interface AdminUserCreate {
   allow_skip_mfa?: boolean;
 }
 
+export interface AdminUserUpdate {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  phone_number?: string | null;
+  profile_url?: string | null;
+  role_id?: number | null;
+  account_type?:
+    | "admin_account"
+    | "user_account"
+    | "super_admin_account"
+    | "audit_account";
+  mfa_enabled?: boolean;
+}
+
 export interface Role {
   id: number;
   name: string;
@@ -108,6 +124,30 @@ export interface Role {
   client_id: number | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Permission {
+  id: number;
+  resource: string;
+  action: string;
+  description: string | null;
+}
+
+export interface RoleCreate {
+  name: string;
+  description?: string;
+}
+
+export interface RoleUpdate {
+  name?: string;
+  description?: string;
+}
+
+export interface RolePermissionRead {
+  id: number;
+  role_id: number;
+  permission_id: number;
+  permission: Permission;
 }
 
 export interface PaginatedResponse<T> {
