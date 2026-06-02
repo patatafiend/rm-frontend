@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 import { useAuthStore } from "@/store/auth.store"
+import { getErrorMessage } from "@/lib/utils/errors"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
@@ -35,7 +36,10 @@ apiClient.interceptors.response.use(
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
     if (error.response?.status !== 401 || original._retry) {
-      return Promise.reject(error)
+      // For non-401 errors, extract error message and throw structured error
+      const errorMessage = getErrorMessage(error)
+      const structuredError = new Error(errorMessage)
+      return Promise.reject(structuredError)
     }
 
     if (isRefreshing) {

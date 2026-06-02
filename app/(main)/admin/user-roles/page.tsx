@@ -21,7 +21,6 @@ import {
   useRolePermissions,
 } from "@/hooks/admin/useRoles";
 import type { Role, RoleCreate, RoleUpdate } from "@/lib/types";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +70,8 @@ export default function RolesPage() {
 
   const handleCreateRole = async (data: RoleCreate | RoleUpdate) => {
     await createRoleMutation.mutateAsync(data as RoleCreate);
+    setFormDialogOpen(false);
+    setEditingRole(null);
   };
 
   const handleUpdateRole = async (data: RoleCreate | RoleUpdate) => {
@@ -79,6 +80,8 @@ export default function RolesPage() {
       roleId: editingRole.id,
       payload: data as RoleUpdate,
     });
+    setFormDialogOpen(false);
+    setEditingRole(null);
   };
 
   const handleDeleteRole = async () => {
@@ -86,7 +89,6 @@ export default function RolesPage() {
     await deleteRoleMutation.mutateAsync(deletingRole.id);
     setDeleteDialogOpen(false);
     setDeletingRole(null);
-    toast.success("Role deleted successfully");
   };
 
   const handleAssignPermission = async (permissionId: number) => {
@@ -127,9 +129,17 @@ export default function RolesPage() {
           <div className="flex items-center gap-3">
             <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
               Total roles:{" "}
-              <span className="font-semibold text-gray-900">{roles.length}</span>
+              <span className="font-semibold text-gray-900">
+                {roles.length}
+              </span>
             </div>
-            <Button onClick={() => { setEditingRole(null); setFormDialogOpen(true); }} className="gap-2">
+            <Button
+              onClick={() => {
+                setEditingRole(null);
+                setFormDialogOpen(true);
+              }}
+              className="gap-2"
+            >
               <Plus className="h-4 w-4" />
               Add role
             </Button>
@@ -193,14 +203,19 @@ export default function RolesPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100">
                       <ShieldCheck className="h-5 w-5 text-gray-400" />
                     </div>
-                    <p className="text-sm font-medium text-gray-500">No roles yet</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      No roles yet
+                    </p>
                     <p className="text-xs text-gray-400">
                       Create your first role to get started.
                     </p>
                     <Button
                       size="sm"
                       className="mt-2 gap-2"
-                      onClick={() => { setEditingRole(null); setFormDialogOpen(true); }}
+                      onClick={() => {
+                        setEditingRole(null);
+                        setFormDialogOpen(true);
+                      }}
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Add role
@@ -308,7 +323,10 @@ export default function RolesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button

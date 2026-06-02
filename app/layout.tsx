@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/providers/query-provider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         <TooltipProvider>
           <QueryProvider>{children}</QueryProvider>
         </TooltipProvider>
+        <Toaster />
       </body>
     </html>
   );

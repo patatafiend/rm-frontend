@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { employeeRequirementsApi } from "@/lib/api/employee-requirements";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
+import { toast } from "sonner";
 
 export const useEmployeeRequirements = (limit?: number, offset?: number) => {
   const { setRequirements, setLoading, setError } =
@@ -24,6 +25,7 @@ export const useEmployeeRequirements = (limit?: number, offset?: number) => {
             ? error.message
             : "Failed to fetch requirements";
         setError(errorMessage);
+        toast.error(errorMessage);
         throw error;
       } finally {
         setLoading(false);

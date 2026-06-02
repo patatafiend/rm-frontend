@@ -24,6 +24,7 @@ export type SortOrder = "asc" | "desc";
 export interface RequirementsFilters {
   company: string | null;
   empStatus: string | null;
+  businessUnit: string | null;
   reqStatus: RequirementStatus;
   daysSinceHire: DaysSinceHireFilter;
   sssNo: DocumentFilter;
@@ -71,6 +72,7 @@ interface EmployeeRequirementsState {
   // Filter actions
   setCompanyFilter: (company: string | null) => void;
   setEmpStatusFilter: (status: string | null) => void;
+  setBusinessUnitFilter: (unit: string | null) => void;
   setReqStatusFilter: (status: RequirementStatus) => void;
   setDaysSinceHireFilter: (filter: DaysSinceHireFilter) => void;
   setSssNoFilter: (filter: DocumentFilter) => void;
@@ -93,12 +95,14 @@ interface EmployeeRequirementsState {
   applyFiltersAndSort: () => void;
   getUniqueCompanies: () => string[];
   getUniqueEmpStatuses: () => string[];
+  getUniqueBusinessUnits: () => string[];
   getPaginatedData: () => EmployeeRequirement[];
 }
 
 const initialFilters: RequirementsFilters = {
   company: null,
   empStatus: null,
+  businessUnit: null,
   reqStatus: "all",
   daysSinceHire: "all",
   sssNo: "all",
@@ -162,7 +166,7 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
     error: null,
 
     currentPage: 1,
-    pageSize: 50,
+    pageSize: 10,
     totalPages: 0,
 
     filters: initialFilters,
@@ -214,6 +218,11 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
     setEmpStatusFilter: (status) => {
       set((state) => ({ filters: { ...state.filters, empStatus: status } }));
+      get().applyFiltersAndSort();
+    },
+
+    setBusinessUnitFilter: (unit) => {
+      set((state) => ({ filters: { ...state.filters, businessUnit: unit } }));
       get().applyFiltersAndSort();
     },
 
@@ -298,6 +307,12 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
 
       if (filters.empStatus) {
         filtered = filtered.filter((r) => r.emp_status === filters.empStatus);
+      }
+
+      if (filters.businessUnit) {
+        filtered = filtered.filter(
+          (r) => r.bu_tagging === filters.businessUnit,
+        );
       }
 
       if (filters.daysSinceHire !== "all") {
@@ -431,6 +446,13 @@ export const useEmployeeRequirementsStore = create<EmployeeRequirementsState>(
     getUniqueEmpStatuses: () => {
       const { requirements } = get();
       return [...new Set(requirements.map((r) => r.emp_status))].sort();
+    },
+
+    getUniqueBusinessUnits: () => {
+      const { requirements } = get();
+      return [...new Set(requirements.map((r) => r.bu_tagging))]
+        .filter(Boolean)
+        .sort();
     },
 
     getUniqueMinorReqs: () => {
