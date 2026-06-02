@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/select";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { useEmployeeRequirements } from "@/hooks/admin/useEmployeeRequirements";
-import { useEmployeeRequirementsFilter } from "@/hooks/admin/useEmployeeRequirementsFilter";
 import type {
   DaysSinceHireFilter,
   DocumentFilter,
@@ -39,6 +38,7 @@ export function EmployeeRequirementsFilters() {
     filters,
     setCompanyFilter,
     setEmpStatusFilter,
+    setBusinessUnitFilter,
     setReqStatusFilter,
     setDaysSinceHireFilter,
     setSssNoFilter,
@@ -47,15 +47,15 @@ export function EmployeeRequirementsFilters() {
     setDateRangeFilter,
     setSearchTerm,
     setMinorReqCompletenessFilter,
-    setMinorReqSpecificFilter,
     clearFilters,
     getUniqueCompanies,
     getUniqueEmpStatuses,
+    getUniqueBusinessUnits,
   } = useEmployeeRequirementsStore();
 
-  const { allMissingRequirements } = useEmployeeRequirementsFilter();
   const companies = getUniqueCompanies();
   const statuses = getUniqueEmpStatuses();
+  const businessUnits = getUniqueBusinessUnits();
   const { refetch, isRefetching } = useEmployeeRequirements();
 
   // Sync the Calendar's DateRange state with the store
@@ -82,6 +82,7 @@ export function EmployeeRequirementsFilters() {
     filters.searchTerm ||
     filters.company ||
     filters.empStatus ||
+    filters.businessUnit ||
     filters.reqStatus !== "all" ||
     filters.daysSinceHire !== "all" ||
     filters.sssNo !== "all" ||
@@ -163,7 +164,7 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="Minor Req Completeness">
+          <FilterField label="Minor Req Status">
             <Select
               value={filters.minorReqCompleteness}
               onValueChange={(val) =>
@@ -177,27 +178,6 @@ export function EmployeeRequirementsFilters() {
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="complete">Complete</SelectItem>
                 <SelectItem value="incomplete">Incomplete</SelectItem>
-              </SelectContent>
-            </Select>
-          </FilterField>
-
-          <FilterField label="Missing Requirement">
-            <Select
-              value={filters.minorReqSpecific || "all"}
-              onValueChange={(val) =>
-                setMinorReqSpecificFilter(val === "all" ? null : val)
-              }
-            >
-              <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {allMissingRequirements.map((req) => (
-                  <SelectItem key={req} value={req}>
-                    {req}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </FilterField>
@@ -223,7 +203,28 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="Requirement Status">
+          <FilterField label="Business Unit">
+            <Select
+              value={filters.businessUnit || "all"}
+              onValueChange={(val) =>
+                setBusinessUnitFilter(val === "all" ? null : val)
+              }
+            >
+              <SelectTrigger className="text-sm bg-gray-50 border-gray-200 focus:bg-white transition-colors">
+                <SelectValue placeholder="All Business Units" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Business Units</SelectItem>
+                {businessUnits.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Major Req Status">
             <Select
               value={filters.reqStatus}
               onValueChange={(val) =>
