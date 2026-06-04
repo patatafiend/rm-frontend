@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 import { useAuthStore } from "@/store/auth.store"
 import { getErrorMessage } from "@/lib/utils/errors"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001"
 
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
