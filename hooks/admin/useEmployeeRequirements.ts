@@ -34,7 +34,7 @@ export const useEmployeeRequirements = (limit?: number, offset?: number) => {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 1,
-    refetchInterval: 30 * 1000, // Auto-refetch every 30 seconds
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes seconds
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     refetchOnReconnect: true, // Refetch when connection restored
   });
