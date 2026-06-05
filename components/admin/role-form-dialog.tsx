@@ -14,12 +14,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import type { Role, RoleCreate, RoleUpdate } from "@/lib/types";
+import { useAuthStore } from "@/store/auth.store";
 
 const roleFormSchema = z.object({
   name: z.string().min(1, "Role name is required"),
@@ -45,6 +42,7 @@ export function RoleFormDialog({
 }: RoleFormDialogProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const isEditMode = !!role;
+  const { user } = useAuthStore();
 
   const form = useForm({
     defaultValues: {
@@ -52,18 +50,26 @@ export function RoleFormDialog({
       description: role?.description || "",
     } as RoleFormData,
     onSubmit: async ({ value }) => {
+      console.log(user?.company_id);
       setSubmitError(null);
       try {
         const payload = {
           name: value.name.trim(),
           description: value.description?.trim() || undefined,
+          account_type: "company_account",
+          company_id: user?.company_id,
         };
         await onSubmit(payload);
         form.reset();
         onOpenChange(false);
-        toast.success(isEditMode ? "Role updated successfully" : "Role created successfully");
+        toast.success(
+          isEditMode
+            ? "Role updated successfully"
+            : "Role created successfully",
+        );
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Something went wrong";
+        const message =
+          error instanceof Error ? error.message : "Something went wrong";
         setSubmitError(message);
         toast.error(message);
       }
@@ -76,7 +82,9 @@ export function RoleFormDialog({
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Role" : "Create Role"}</DialogTitle>
           <DialogDescription>
-            {isEditMode ? "Update the role details" : "Create a new role for users"}
+            {isEditMode
+              ? "Update the role details"
+              : "Create a new role for users"}
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +143,11 @@ export function RoleFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : isEditMode ? "Save Changes" : "Create Role"}
+              {isLoading
+                ? "Saving..."
+                : isEditMode
+                  ? "Save Changes"
+                  : "Create Role"}
             </Button>
           </div>
         </form>

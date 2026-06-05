@@ -9,6 +9,7 @@ export interface LoginResponse {
   token_type: string;
   mfa_required: boolean;
   mfa_token?: string;
+  user: User;
 }
 
 export interface RegisterRequest {
@@ -136,6 +137,7 @@ export interface Permission {
 export interface RoleCreate {
   name: string;
   description?: string;
+  company_id: number;
 }
 
 export interface RoleUpdate {

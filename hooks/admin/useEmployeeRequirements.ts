@@ -2,13 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { employeeRequirementsApi } from "@/lib/api/employee-requirements";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
 
 export const useEmployeeRequirements = (limit?: number, offset?: number) => {
   const { setRequirements, setLoading, setError } =
     useEmployeeRequirementsStore();
+    const { accessToken } = useAuthStore(); 
 
   const query = useQuery({
-    queryKey: ["employee-requirements", limit, offset],
+    queryKey: ["employee-requirements", limit, offset, accessToken],
     queryFn: async () => {
       setLoading(true);
       try {
