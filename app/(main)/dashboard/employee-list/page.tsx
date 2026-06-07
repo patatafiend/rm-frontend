@@ -1,6 +1,8 @@
 "use client";
 
-import { ClipboardList, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { ClipboardList, AlertCircle, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { EmployeeRequirementsFilters } from "@/components/admin/employee-requirements-filters";
 import { EmployeeRequirementsTable } from "@/components/admin/employee-requirements-table";
 import { EmployeeRequirementsDrawer } from "@/components/admin/employee-requirements-drawer";
@@ -8,10 +10,122 @@ import { EmployeeRequirementsPagination } from "@/components/admin/employee-requ
 import { useEmployeeRequirements } from "@/hooks/admin/useEmployeeRequirements";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UNIVERSAL_REQUIRED_REQS } from "@/lib/utils/requirements";
+import * as XLSX from "xlsx";
+import type { EmployeeRequirement } from "@/lib/types";
+
+function getMissingDocuments(employee: EmployeeRequirement): string[] {
+  const missing: string[] = [];
+  if (!employee.rm_sss_no) missing.push("SSS");
+  if (!employee.rm_pagibig_no) missing.push("Pagibig");
+  if (!employee.rm_phhealth) missing.push("PhilHealth");
+  return missing;
+}
+
+function getMissingMinorReqs(employee: EmployeeRequirement): string[] {
+  if (!employee.minor_reqs) {
+    return UNIVERSAL_REQUIRED_REQS;
+  }
+  const provided = employee.minor_reqs
+    .split("; ")
+    .map((req) => req.trim())
+    .filter(Boolean);
+  const providedSet = new Set(provided);
+  return UNIVERSAL_REQUIRED_REQS.filter((req) => !providedSet.has(req));
+}
+
+function calculateDaysSinceHire(hireDate: string): number {
+  const [year, month, day] = hireDate.split("-").map(Number);
+  const hire = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffTime = today.getTime() - hire.getTime();
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+}
+
+const exportToExcel = (employees: EmployeeRequirement[]) => {
+  // Build worksheet data with individual columns for each minor requirement
+  const headerRow = [
+    "Tran No",
+    "ERMS ID",
+    "Employee",
+    "Status",
+    "Contract Date",
+    "Days Since Hire",
+    "Major Docs",
+    ...UNIVERSAL_REQUIRED_REQS,
+  ];
+
+  const wsData: (string | number)[][] = [headerRow];
+
+  // Add employee rows
+  for (const employee of employees) {
+    const missingDocs = getMissingDocuments(employee);
+    const majorDocsValue =
+      missingDocs.length === 0 ? "Completed" : missingDocs.join(", ");
+
+    const missingMinor = getMissingMinorReqs(employee);
+    const missingSet = new Set(missingMinor);
+
+    const contractDate = new Date(employee.contract_sdate).toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    );
+
+    const daysSinceHire = calculateDaysSinceHire(employee.contract_sdate);
+
+    // Build row with individual minor requirement columns
+    const row: (string | number)[] = [
+      employee.rm_tran_no,
+      employee.erms_id,
+      `${employee.rm_first_name} ${employee.rm_lastname}`,
+      employee.emp_status,
+      contractDate,
+      daysSinceHire,
+      majorDocsValue,
+    ];
+
+    // Add a column for each universal requirement
+    for (const req of UNIVERSAL_REQUIRED_REQS) {
+      row.push(missingSet.has(req) ? "Missing" : "");
+    }
+
+    wsData.push(row);
+  }
+
+  // Create workbook and worksheet
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Employee Requirements");
+
+  // Generate filename with current date
+  const today = new Date().toISOString().split("T")[0];
+  const filename = `employee-requirements-${today}.xlsx`;
+
+  // Trigger download
+  XLSX.writeFile(wb, filename);
+};
 
 export default function EmployeePage() {
   const { isLoading, error } = useEmployeeRequirements();
-  const { setSelectedEmployee } = useEmployeeRequirementsStore();
+  const { setSelectedEmployee, filteredRequirements } =
+    useEmployeeRequirementsStore();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // Small delay to ensure state updates visually
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      exportToExcel(filteredRequirements);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -34,6 +148,20 @@ export default function EmployeePage() {
 
       {/* Filters */}
       <EmployeeRequirementsFilters />
+
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleExport}
+          disabled={isExporting || isLoading}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Export
+        </Button>
+      </div>
 
       {/* Table */}
       {isLoading ? (
