@@ -75,12 +75,13 @@ export function AppSidebar() {
   const items = workspace === "Dashboard" ? dashBoardSideBar : adminSidebar;
   const { user } = useAuthStore();
   const logout = useLogout();
+  const isAdmin = user?.account_type?.includes("admin_account");
 
   return (
     <Sidebar>
       <SidebarHeader>
         <SidebarMenu>
-          <PageDropDown workspace={workspace} onSelect={setWorspace} />
+          <PageDropDown workspace={workspace} onSelect={setWorspace} isAdmin={isAdmin} />
           <SidebarMenuItem></SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -182,14 +183,20 @@ export function AppSidebar() {
 export function PageDropDown({
   workspace,
   onSelect,
+  isAdmin,
 }: {
   workspace: string;
   onSelect: (w: "Dashboard" | "Admin") => void;
+  isAdmin?: boolean;
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild className="">
-        <Button variant="outline" className="w-full justify-start gap-3 h-9">
+      <DropdownMenuTrigger asChild disabled={!isAdmin}>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start gap-3 h-9" 
+          disabled={!isAdmin}
+        >
           <span className="border border-muted-foreground/30 rounded p-1">
             {workspace === "Dashboard" ? (
               <ChessQueenIcon className="h-6 w-6" />
