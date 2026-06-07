@@ -4,7 +4,6 @@ import { EmployeeRequirement } from "../types";
  
  */
 export const UNIVERSAL_REQUIRED_REQS = [
-  "Authority to Deduct", // Mandatory for salary deductions (SSS, Pagibig, PhilHealth)
   "CDI Affidavit", // Common Philippines requirement for employment
   "Certificate, Birth", // Identity verification (mandatory)
   "Certificate, Employment", // Employment history reference

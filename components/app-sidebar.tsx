@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuContent,
 } from "./ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "./ui/button";
 import {
   ChessQueenIcon,
@@ -36,6 +37,7 @@ import {
   User2,
   LogOut,
   Loader2,
+  Home,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -84,6 +86,19 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        <SidebarGroup className="pb-0">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard">
+                  <Home className="h-4 w-4" />
+                  Home
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <Separator className="my-2" />
         <SidebarGroup>
           <SidebarGroupLabel>{workspace}</SidebarGroupLabel>
           <SidebarGroupContent>
