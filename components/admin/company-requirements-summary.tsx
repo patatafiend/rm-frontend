@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,6 +14,8 @@ import {
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { computeMinorReqStatus } from "@/lib/utils/requirements";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 
 const ComplianceBadge = ({
@@ -45,11 +49,105 @@ const calculateCompliance = (
     return (((total - missingAnyMajor) / total) * 100).toFixed(0);
   };
 
+interface CompanyRow {
+  company: string;
+  total: number;
+  missingSss: number;
+  missingPagibig: number;
+  missingPhhealth: number;
+  missingAnyMajor: number;
+  minorIncomplete: number;
+}
+
+interface TotalsRow {
+  total: number;
+  missingSss: number;
+  missingPagibig: number;
+  missingPhhealth: number;
+  missingAnyMajor: number;
+  minorIncomplete: number;
+}
+
+const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
+  // Build worksheet data
+  const wsData: (string | number)[][] = [
+    [
+      "Company",
+      "Total",
+      "Missing SSS",
+      "Missing Pag-IBIG",
+      "Missing PhilHealth",
+      "Missing Any Major",
+      "Minor Incomplete",
+      "Minor Req Compliance %",
+      "Major Req Compliance %",
+    ],
+  ];
+
+  // Add company rows
+  for (const company of companies) {
+    const minorCompliance = calculateCompliance(
+      company.total,
+      company.minorIncomplete
+    );
+    const majorCompliance = calculateCompliance(
+      company.total,
+      company.missingAnyMajor
+    );
+
+    wsData.push([
+      company.company,
+      company.total,
+      company.missingSss,
+      company.missingPagibig,
+      company.missingPhhealth,
+      company.missingAnyMajor,
+      company.minorIncomplete,
+      `${minorCompliance}%`,
+      `${majorCompliance}%`,
+    ]);
+  }
+
+  // Add totals row
+  const totalMinorCompliance = calculateCompliance(
+    totals.total,
+    totals.minorIncomplete
+  );
+  const totalMajorCompliance = calculateCompliance(
+    totals.total,
+    totals.missingAnyMajor
+  );
+
+  wsData.push([
+    "Total",
+    totals.total,
+    totals.missingSss,
+    totals.missingPagibig,
+    totals.missingPhhealth,
+    totals.missingAnyMajor,
+    totals.minorIncomplete,
+    `${totalMinorCompliance}%`,
+    `${totalMajorCompliance}%`,
+  ]);
+
+  // Create workbook and worksheet
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Company Summary");
+
+  // Generate filename with current date
+  const today = new Date().toISOString().split("T")[0];
+  const filename = `company-requirements-summary-${today}.xlsx`;
+
+  // Trigger download
+  XLSX.writeFile(wb, filename);
+};
+
 export function CompanyRequirementsSummary() {
   const router = useRouter();
   const { requirements, setCompanyFilter } = useEmployeeRequirementsStore();
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Aggregate data by company
   const companyStats = new Map<
     string,
     {
@@ -111,6 +209,17 @@ export function CompanyRequirementsSummary() {
     minorIncomplete: companies.reduce((sum, c) => sum + c.minorIncomplete, 0),
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // Small delay to ensure state updates visually
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      exportToExcel(companies, totals);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
 
 
@@ -121,6 +230,18 @@ export function CompanyRequirementsSummary() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex justify-end px-4 pt-4 pb-0">
+        <Button
+          onClick={handleExport}
+          disabled={isExporting}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Export
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow className="border-b border-gray-200">
