@@ -48,6 +48,8 @@ const exportToExcel = (employees: EmployeeRequirement[]) => {
   const headerRow = [
     "Tran No",
     "ERMS ID",
+    "Company",
+    "Business Unit",
     "Employee",
     "Status",
     "Contract Date",
@@ -82,6 +84,8 @@ const exportToExcel = (employees: EmployeeRequirement[]) => {
     const row: (string | number)[] = [
       employee.rm_tran_no,
       employee.erms_id,
+      employee.hr_company,
+      employee.bu_tagging,
       `${employee.rm_first_name} ${employee.rm_lastname}`,
       employee.emp_status,
       contractDate,
