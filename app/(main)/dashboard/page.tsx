@@ -9,7 +9,6 @@ export default function DashBoard() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-blue-50 border border-blue-100">
@@ -26,7 +25,6 @@ export default function DashBoard() {
         </div>
       </div>
 
-      {/* Summary Table */}
       <CompanyRequirementsSummary />
     </div>
   );

@@ -17,37 +17,35 @@ import { useRouter } from "next/navigation";
 import { Download } from "lucide-react";
 import * as XLSX from "xlsx";
 
-
 const ComplianceBadge = ({
-    compliancePercent,
-  }: {
-    compliancePercent: number;
-  }) => {
-    let className = "font-medium ";
+  compliancePercent,
+}: {
+  compliancePercent: number;
+}) => {
+  let className = "font-medium ";
 
-    if (compliancePercent === 0) {
-      className += "text-gray-400";
-    } else if (compliancePercent >= 90) {
-      className +=
-        "bg-green-100 text-green-700 hover:bg-green-100 hover:text-green-700";
-    } else if (compliancePercent >= 70) {
-      className +=
-        "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-700";
-    } else {
-      className +=
-        "bg-red-100 text-red-600 hover:bg-red-100 hover:text-red-600";
-    }
+  if (compliancePercent === 0) {
+    className += "text-gray-400";
+  } else if (compliancePercent >= 90) {
+    className +=
+      "bg-green-100 text-green-700 hover:bg-green-100 hover:text-green-700";
+  } else if (compliancePercent >= 70) {
+    className +=
+      "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-700";
+  } else {
+    className += "bg-red-100 text-red-600 hover:bg-red-100 hover:text-red-600";
+  }
 
-    return <Badge className={className}>{compliancePercent}%</Badge>;
-  };
+  return <Badge className={className}>{compliancePercent}%</Badge>;
+};
 
 const calculateCompliance = (
-    total: number,
-    missingAnyMajor: number
-  ): string => {
-    if (total === 0) return "0";
-    return (((total - missingAnyMajor) / total) * 100).toFixed(0);
-  };
+  total: number,
+  missingAnyMajor: number,
+): string => {
+  if (total === 0) return "0";
+  return (((total - missingAnyMajor) / total) * 100).toFixed(0);
+};
 
 interface CompanyRow {
   company: string;
@@ -69,7 +67,6 @@ interface TotalsRow {
 }
 
 const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
-  // Build worksheet data
   const wsData: (string | number)[][] = [
     [
       "Company",
@@ -84,15 +81,14 @@ const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
     ],
   ];
 
-  // Add company rows
   for (const company of companies) {
     const minorCompliance = calculateCompliance(
       company.total,
-      company.minorIncomplete
+      company.minorIncomplete,
     );
     const majorCompliance = calculateCompliance(
       company.total,
-      company.missingAnyMajor
+      company.missingAnyMajor,
     );
 
     wsData.push([
@@ -108,14 +104,13 @@ const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
     ]);
   }
 
-  // Add totals row
   const totalMinorCompliance = calculateCompliance(
     totals.total,
-    totals.minorIncomplete
+    totals.minorIncomplete,
   );
   const totalMajorCompliance = calculateCompliance(
     totals.total,
-    totals.missingAnyMajor
+    totals.missingAnyMajor,
   );
 
   wsData.push([
@@ -130,16 +125,13 @@ const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
     `${totalMajorCompliance}%`,
   ]);
 
-  // Create workbook and worksheet
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Company Summary");
 
-  // Generate filename with current date
   const today = new Date().toISOString().split("T")[0];
   const filename = `company-requirements-summary-${today}.xlsx`;
 
-  // Trigger download
   XLSX.writeFile(wb, filename);
 };
 
@@ -182,16 +174,13 @@ export function CompanyRequirementsSummary() {
     if (!employee.rm_phhealth) stats.missingPhhealth++;
 
     const hasMissingMajor =
-      !employee.rm_sss_no ||
-      !employee.rm_pagibig_no ||
-      !employee.rm_phhealth;
+      !employee.rm_sss_no || !employee.rm_pagibig_no || !employee.rm_phhealth;
     if (hasMissingMajor) stats.missingAnyMajor++;
 
     const minorReqStatus = computeMinorReqStatus(employee);
     if (!minorReqStatus.complete) stats.minorIncomplete++;
   }
 
-  // Convert to array and sort by company name
   const companies = Array.from(companyStats.entries())
     .map(([company, stats]) => ({
       company,
@@ -199,7 +188,6 @@ export function CompanyRequirementsSummary() {
     }))
     .sort((a, b) => a.company.localeCompare(b.company));
 
-  // Calculate totals
   const totals = {
     total: companies.reduce((sum, c) => sum + c.total, 0),
     missingSss: companies.reduce((sum, c) => sum + c.missingSss, 0),
@@ -212,16 +200,12 @@ export function CompanyRequirementsSummary() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      // Small delay to ensure state updates visually
       await new Promise((resolve) => setTimeout(resolve, 100));
       exportToExcel(companies, totals);
     } finally {
       setIsExporting(false);
     }
   };
-
-
-
 
   const handleRowClick = (companyName: string) => {
     setCompanyFilter(companyName);
@@ -277,7 +261,7 @@ export function CompanyRequirementsSummary() {
         <TableBody>
           {companies.map((company) => {
             const compliance = parseFloat(
-              calculateCompliance(company.total, company.missingAnyMajor)
+              calculateCompliance(company.total, company.missingAnyMajor),
             );
             return (
               <TableRow
@@ -309,7 +293,10 @@ export function CompanyRequirementsSummary() {
                 <TableCell className="px-4 py-3 text-center">
                   <ComplianceBadge
                     compliancePercent={parseFloat(
-                      calculateCompliance(company.total, company.minorIncomplete)
+                      calculateCompliance(
+                        company.total,
+                        company.minorIncomplete,
+                      ),
                     )}
                   />
                 </TableCell>
@@ -345,14 +332,14 @@ export function CompanyRequirementsSummary() {
             <TableCell className="px-4 py-3 text-center">
               <ComplianceBadge
                 compliancePercent={parseFloat(
-                  calculateCompliance(totals.total, totals.minorIncomplete)
+                  calculateCompliance(totals.total, totals.minorIncomplete),
                 )}
               />
             </TableCell>
             <TableCell className="px-4 py-3 text-center">
               <ComplianceBadge
                 compliancePercent={parseFloat(
-                  calculateCompliance(totals.total, totals.missingAnyMajor)
+                  calculateCompliance(totals.total, totals.missingAnyMajor),
                 )}
               />
             </TableCell>

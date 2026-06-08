@@ -93,7 +93,6 @@ const exportToExcel = (employees: EmployeeRequirement[]) => {
       majorDocsValue,
     ];
 
-    // Add a column for each universal requirement
     for (const req of UNIVERSAL_REQUIRED_REQS) {
       row.push(missingSet.has(req) ? "Missing" : "");
     }

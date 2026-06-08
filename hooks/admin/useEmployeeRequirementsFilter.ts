@@ -4,16 +4,10 @@ import { useMemo, useCallback } from "react";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 import { MinorReqCompleteness } from "@/store/employee-requirements.store";
 
-/**
- * Custom hook for filtering employees by minor requirement completeness and specific requirements.
- * Provides convenient methods to set filters while handling store state updates.
- */
 export function useEmployeeRequirementsFilter() {
   const store = useEmployeeRequirementsStore();
 
-  // Get computed data for UI display
   const reqStatus = useMemo(() => {
-    // Map of employee ID to their requirement status
     const statusMap = new Map();
     store.filteredRequirements.forEach((emp) => {
       const status = store.reqStatusCache.get(emp);
@@ -22,7 +16,6 @@ export function useEmployeeRequirementsFilter() {
     return statusMap;
   }, [store.filteredRequirements, store.reqStatusCache]);
 
-  // Get all missing requirements across filtered employees (for filter dropdown)
   const allMissingRequirements = useMemo(() => {
     const missingSet = new Set<string>();
     store.filteredRequirements.forEach((emp) => {
@@ -32,7 +25,6 @@ export function useEmployeeRequirementsFilter() {
     return Array.from(missingSet).sort();
   }, [store.filteredRequirements, store.reqStatusCache]);
 
-  // Get summary statistics
   const stats = useMemo(() => {
     const stats = {
       total: store.filteredRequirements.length,
@@ -52,7 +44,6 @@ export function useEmployeeRequirementsFilter() {
     return stats;
   }, [store.filteredRequirements, store.reqStatusCache]);
 
-  // Action: Set minor requirement completeness filter
   const setReqCompleteness = useCallback(
     (filter: MinorReqCompleteness) => {
       store.setMinorReqCompletenessFilter(filter);
@@ -60,7 +51,6 @@ export function useEmployeeRequirementsFilter() {
     [store],
   );
 
-  // Action: Set specific missing requirement filter
   const setMissingRequirement = useCallback(
     (req: string | null) => {
       store.setMinorReqSpecificFilter(req);
@@ -68,13 +58,11 @@ export function useEmployeeRequirementsFilter() {
     [store],
   );
 
-  // Action: Clear both requirement filters
   const clearReqFilters = useCallback(() => {
     store.setMinorReqCompletenessFilter("all");
     store.setMinorReqSpecificFilter(null);
   }, [store]);
 
-  // Get current filter values
   const currentFilters = useMemo(
     () => ({
       completeness: store.filters.minorReqCompleteness,
@@ -84,18 +72,15 @@ export function useEmployeeRequirementsFilter() {
   );
 
   return {
-    // State
     reqStatus,
     stats,
     currentFilters,
     allMissingRequirements,
 
-    // Actions
     setReqCompleteness,
     setMissingRequirement,
     clearReqFilters,
 
-    // Store reference (if direct access needed)
     store,
   };
 }
