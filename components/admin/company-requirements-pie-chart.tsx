@@ -21,21 +21,6 @@ import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
 
-const CHART_COLORS = [
-  "#2563eb",
-  "#16a34a",
-  "#dc2626",
-  "#d97706",
-  "#9333ea",
-  "#0891b2",
-  "#ea580c",
-  "#be185d",
-  "#65a30d",
-  "#0f766e",
-  "#7c3aed",
-  "#b45309",
-];
-
 const METRICS = [
   { value: "sssCompliance", label: "SSS Compliance" },
   { value: "pagibigCompliance", label: "Pag-IBIG Compliance" },
@@ -50,6 +35,12 @@ const METRIC_TO_MISSING: Record<MetricKey, string> = {
   pagibigCompliance: "missingPagibig",
   phhealthCompliance: "missingPhhealth",
   overallCompliance: "missingAnyMajor",
+};
+
+const DONUT_CONFIG: ChartConfig = {
+  value: { label: "Employees" },
+  Compliant: { label: "Compliant", color: "#16a34a" },
+  "Non-Compliant": { label: "Non-Compliant", color: "#dc2626" },
 };
 
 export function CompanyRequirementsPieChart() {
@@ -117,52 +108,13 @@ export function CompanyRequirementsPieChart() {
     [selectedCompanyValues],
   );
 
-  const chartData = useMemo(() => {
-    const missingKey = METRIC_TO_MISSING[selectedMetric];
-
-    if (selectedCompanyValues.length === 1) {
-      // Single company: show compliant vs non-compliant slices
-      const c = companyStats.find(
-        (c) => c.company === selectedCompanyValues[0],
-      );
-      if (!c || c.total === 0) return [];
-      const missing = c[missingKey as keyof typeof c] as number;
-      const compliant = c.total - missing;
-      return [
-        { company: "Compliant", value: compliant, fill: "#16a34a" },
-        { company: "Non-Compliant", value: missing, fill: "#dc2626" },
-      ];
-    }
-
-    // Multiple companies: show each company's non-compliant count
-    return companyStats
-      .filter((c) => selectedCompanies.has(c.company) && c.total > 0)
-      .map((c, i) => {
-        const missing = c[missingKey as keyof typeof c] as number;
-        return {
-          company: c.company,
-          value: missing,
-          fill: CHART_COLORS[i % CHART_COLORS.length],
-        };
-      })
-      .filter((c) => c.value > 0);
-  }, [companyStats, selectedCompanies, selectedCompanyValues, selectedMetric]);
-
-  const chartConfig = useMemo(() => {
-    const config: ChartConfig = {
-      value: {
-        label:
-          METRICS.find((m) => m.value === selectedMetric)?.label ?? "Value",
-      },
-    };
-    companyStats.forEach((c, i) => {
-      config[c.company] = {
-        label: c.company,
-        color: CHART_COLORS[i % CHART_COLORS.length],
-      };
-    });
-    return config;
-  }, [companyStats, selectedMetric]);
+  const visibleCompanies = useMemo(
+    () =>
+      companyStats.filter(
+        (c) => selectedCompanies.has(c.company) && c.total > 0,
+      ),
+    [companyStats, selectedCompanies],
+  );
 
   const metricLabel = METRICS.find((m) => m.value === selectedMetric)?.label;
 
@@ -173,6 +125,7 @@ export function CompanyRequirementsPieChart() {
         <CardDescription>{metricLabel} by Company</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {/* Controls */}
         <div className="flex items-center gap-2">
           <Label className="text-xs text-gray-600 shrink-0">Metric</Label>
           <Select
@@ -208,63 +161,104 @@ export function CompanyRequirementsPieChart() {
           />
         </div>
 
-        {chartData.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            <ChartContainer
-              config={chartConfig}
-              className="mx-auto w-full"
-              style={{ height: 260 }}
-            >
-              <PieChart>
-                <Tooltip
-                  contentStyle={{ fontSize: 12 }}
-                  formatter={(value, name) => {
-                    if (selectedCompanyValues.length === 1) {
-                      const total = chartData.reduce((s, d) => s + d.value, 0);
-                      const pct =
-                        total > 0
-                          ? ((Number(value) / total) * 100).toFixed(1)
-                          : "0";
-                      return [`${value} employees (${pct}%)`, name];
-                    }
-                    return [`${value} non-compliant`, name];
-                  }}
-                />
-                <Pie
-                  data={chartData}
-                  dataKey="value"
-                  nameKey="company"
-                  labelLine={false}
-                />
-              </PieChart>
-            </ChartContainer>
+        {/* Shared legend */}
+        <div className="flex items-center gap-4 px-1">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-green-600 shrink-0" />
+            <span className="text-xs text-gray-500">Compliant</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-600 shrink-0" />
+            <span className="text-xs text-gray-500">Non-Compliant</span>
+          </div>
+        </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-1">
-              {chartData.map((d) => {
-                const total = chartData.reduce((s, item) => s + item.value, 0);
-                const pct =
-                  total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
-                return (
-                  <div
-                    key={d.company}
-                    className="flex items-center gap-1.5 min-w-0"
-                  >
+        {/* Donut grid */}
+        {visibleCompanies.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {visibleCompanies.map((c) => {
+              const missingKey = METRIC_TO_MISSING[selectedMetric];
+              const missing = c[missingKey as keyof typeof c] as number;
+              const compliant = c.total - missing;
+              const compliancePct =
+                c.total > 0 ? ((compliant / c.total) * 100).toFixed(1) : "0";
+              const pctNum = parseFloat(compliancePct);
+
+              const slices = [
+                { company: "Compliant", value: compliant, fill: "#16a34a" },
+                { company: "Non-Compliant", value: missing, fill: "#dc2626" },
+              ];
+
+              return (
+                <div
+                  key={c.company}
+                  className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-gray-50/50 p-3"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2 min-h-[2.5rem]">
+                    <p
+                      className="text-xs font-medium text-gray-700 leading-tight line-clamp-2"
+                      title={c.company}
+                    >
+                      {c.company}
+                    </p>
                     <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: d.fill }}
-                    />
-                    <span className="text-xs text-gray-600 truncate max-w-[180px]">
-                      {d.company}
-                    </span>
-                    <span className="text-xs font-medium text-gray-800">
-                      {selectedCompanyValues.length === 1
-                        ? `${d.value} (${pct}%)`
-                        : `${d.value}`}
+                      className={`shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                        pctNum >= 90
+                          ? "bg-green-100 text-green-700"
+                          : pctNum >= 70
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {compliancePct}%
                     </span>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Donut */}
+                  <ChartContainer
+                    config={DONUT_CONFIG}
+                    className="mx-auto w-full"
+                    style={{ height: 130 }}
+                  >
+                    <PieChart>
+                      <Tooltip
+                        contentStyle={{ fontSize: 11 }}
+                        formatter={(value, name) => [
+                          `${value} (${c.total > 0 ? ((Number(value) / c.total) * 100).toFixed(1) : 0}%)`,
+                          name,
+                        ]}
+                      />
+                      <Pie
+                        data={slices}
+                        dataKey="value"
+                        nameKey="company"
+                        labelLine={false}
+                        innerRadius={0}
+                        outerRadius={52}
+                        strokeWidth={0}
+                      />
+                    </PieChart>
+                  </ChartContainer>
+
+                  {/* Counts */}
+                  <div className="flex justify-center gap-3">
+                    <span className="text-xs text-gray-500">
+                      <span className="font-medium text-green-700">
+                        {compliant}
+                      </span>{" "}
+                      compliant
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      <span className="font-medium text-red-600">
+                        {missing}
+                      </span>{" "}
+                      lacking
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="flex items-center justify-center h-40 text-sm text-gray-400">
