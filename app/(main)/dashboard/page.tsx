@@ -3,6 +3,7 @@
 import { BarChart3 } from "lucide-react";
 import { CompanyRequirementsSummary } from "@/components/admin/company-requirements-summary";
 import { useEmployeeRequirements } from "@/hooks/admin/useEmployeeRequirements";
+import { CompanyRequirementsPieChart } from "@/components/admin/company-requirements-pie-chart";
 
 export default function DashBoard() {
   useEmployeeRequirements();
@@ -24,7 +25,7 @@ export default function DashBoard() {
           </div>
         </div>
       </div>
-
+      <CompanyRequirementsPieChart />
       <CompanyRequirementsSummary />
     </div>
   );
