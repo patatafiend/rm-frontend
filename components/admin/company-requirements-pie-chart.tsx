@@ -20,7 +20,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
-import { computeMinorReqStatus } from "@/lib/utils/requirements";
 
 const CHART_COLORS = [
   "#2563eb",
