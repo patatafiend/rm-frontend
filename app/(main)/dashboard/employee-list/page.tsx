@@ -94,7 +94,7 @@ const exportToExcel = (employees: EmployeeRequirement[]) => {
     ];
 
     for (const req of UNIVERSAL_REQUIRED_REQS) {
-      row.push(missingSet.has(req) ? "Missing" : "");
+      row.push(missingSet.has(req) ? "Lacking" : "");
     }
 
     wsData.push(row);

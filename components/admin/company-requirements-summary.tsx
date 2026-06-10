@@ -71,9 +71,9 @@ const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
     [
       "Company",
       "Total",
-      "Missing SSS",
-      "Missing Pag-IBIG",
-      "Missing PhilHealth",
+      "Lacking SSS",
+      "Lacking Pag-IBIG",
+      "Lacking PhilHealth",
       "Missing Any Major",
       "Minor Incomplete",
       "Minor Req Compliance %",
@@ -229,31 +229,28 @@ export function CompanyRequirementsSummary() {
       <Table>
         <TableHeader>
           <TableRow className="border-b border-gray-200">
-            <TableHead className="h-10 px-4 py-2 text-left text-xs font-semibold text-gray-700">
+            <TableHead className="h-10 px-4 py-2 text-left text-xs font-semibold text-gray-700 ">
               Company
+            </TableHead>
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
+              Lacking SSS
+            </TableHead>
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
+              Lacking Pag-IBIG
+            </TableHead>
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
+              Lacking PhilHealth
             </TableHead>
             <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
               Total
             </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
-              Missing SSS
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
+              30 Days
             </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
-              Missing Pag-IBIG
-            </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
-              Missing PhilHealth
-            </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
-              Missing Any Major
-            </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
-              Minor Incomplete
-            </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
               Minor Req Compliance %
             </TableHead>
-            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700">
+            <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
               Major Req Compliance %
             </TableHead>
           </TableRow>
@@ -272,10 +269,7 @@ export function CompanyRequirementsSummary() {
                 <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">
                   {company.company}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-center text-sm text-gray-700">
-                  {company.total}
-                </TableCell>
-                <TableCell className="px-4 py-3 text-center text-sm text-gray-700">
+                <TableCell className="px-4 py-3 text-center text-sm text-gray-700 border-l border-gray-200">
                   {company.missingSss}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-center text-sm text-gray-700">
@@ -287,10 +281,10 @@ export function CompanyRequirementsSummary() {
                 <TableCell className="px-4 py-3 text-center text-sm text-gray-700">
                   {company.missingAnyMajor}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-center text-sm text-gray-700">
+                <TableCell className="px-4 py-3 text-center text-sm text-gray-700 border-l border-gray-200">
                   {company.minorIncomplete}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-center">
+                <TableCell className="px-4 py-3 text-center border-l border-gray-200">
                   <ComplianceBadge
                     compliancePercent={parseFloat(
                       calculateCompliance(
@@ -300,7 +294,7 @@ export function CompanyRequirementsSummary() {
                     )}
                   />
                 </TableCell>
-                <TableCell className="px-4 py-3 text-center">
+                <TableCell className="px-4 py-3 text-center border-l border-gray-200">
                   <ComplianceBadge compliancePercent={compliance} />
                 </TableCell>
               </TableRow>
@@ -308,13 +302,10 @@ export function CompanyRequirementsSummary() {
           })}
           {/* Totals row */}
           <TableRow className="border-t-2 border-gray-200 bg-gray-50">
-            <TableCell className="px-4 py-3 text-sm font-semibold text-gray-900">
+            <TableCell className="px-4 py-3 text-sm font-semibold text-gray-900 ">
               Total
             </TableCell>
-            <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
-              {totals.total}
-            </TableCell>
-            <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
+            <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900 border-l border-gray-200">
               {totals.missingSss}
             </TableCell>
             <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
@@ -326,17 +317,17 @@ export function CompanyRequirementsSummary() {
             <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
               {totals.missingAnyMajor}
             </TableCell>
-            <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
+            <TableCell className="px-4 py-3 text-center text-sm font-semibold text-gray-900 border-l border-gray-200">
               {totals.minorIncomplete}
             </TableCell>
-            <TableCell className="px-4 py-3 text-center">
+            <TableCell className="px-4 py-3 text-center border-l border-gray-200">
               <ComplianceBadge
                 compliancePercent={parseFloat(
                   calculateCompliance(totals.total, totals.minorIncomplete),
                 )}
               />
             </TableCell>
-            <TableCell className="px-4 py-3 text-center">
+            <TableCell className="px-4 py-3 text-center border-l border-gray-200">
               <ComplianceBadge
                 compliancePercent={parseFloat(
                   calculateCompliance(totals.total, totals.missingAnyMajor),

@@ -189,7 +189,7 @@ export function EmployeeRequirementsDrawer() {
             </Section>
 
             {/* Requirements */}
-            <Section icon={ClipboardCheck} title="Requirements">
+            <Section icon={ClipboardCheck} title="Requirements Submitted">
               <div className="space-y-4">
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
