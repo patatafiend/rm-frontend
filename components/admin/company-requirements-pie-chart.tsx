@@ -20,12 +20,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useEmployeeRequirementsStore } from "@/store/employee-requirements.store";
+import { computeMinorReqStatus } from "@/lib/utils/requirements";
 
 const METRICS = [
   { value: "sssCompliance", label: "SSS Compliance" },
   { value: "pagibigCompliance", label: "Pag-IBIG Compliance" },
   { value: "phhealthCompliance", label: "PhilHealth Compliance" },
   { value: "overallCompliance", label: "Overall Compliance" },
+  { value: "requirementCompliance", label: "Requirement Compliance" },
 ] as const;
 
 type MetricKey = (typeof METRICS)[number]["value"];
@@ -35,6 +37,7 @@ const METRIC_TO_MISSING: Record<MetricKey, string> = {
   pagibigCompliance: "missingPagibig",
   phhealthCompliance: "missingPhhealth",
   overallCompliance: "missingAnyMajor",
+  requirementCompliance: "minorIncomplete",
 };
 
 const DONUT_CONFIG: ChartConfig = {
@@ -57,6 +60,7 @@ export function CompanyRequirementsPieChart() {
         missingPagibig: number;
         missingPhhealth: number;
         missingAnyMajor: number;
+        minorIncomplete: number;
       }
     >();
 
@@ -69,6 +73,7 @@ export function CompanyRequirementsPieChart() {
           missingPagibig: 0,
           missingPhhealth: 0,
           missingAnyMajor: 0,
+          minorIncomplete: 0,
         });
       }
       const stats = map.get(company)!;
@@ -82,6 +87,8 @@ export function CompanyRequirementsPieChart() {
         !employee.rm_phhealth
       )
         stats.missingAnyMajor++;
+      const minorReqStatus = computeMinorReqStatus(employee);
+      if (!minorReqStatus.complete) stats.minorIncomplete++;
     }
 
     return Array.from(map.entries())
