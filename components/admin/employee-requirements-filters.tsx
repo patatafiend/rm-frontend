@@ -58,7 +58,6 @@ export function EmployeeRequirementsFilters() {
   const businessUnits = getUniqueBusinessUnits();
   const { refetch, isRefetching } = useEmployeeRequirements();
 
-  // Sync the Calendar's DateRange state with the store
   const dateRange: DateRange | undefined =
     filters.dateRange.start || filters.dateRange.end
       ? {
@@ -95,7 +94,6 @@ export function EmployeeRequirementsFilters() {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
           <SlidersHorizontal className="w-4 h-4 text-gray-400" />
@@ -128,9 +126,7 @@ export function EmployeeRequirementsFilters() {
         </div>
       </div>
 
-      {/* Filter Body */}
       <div className="px-5 py-4 space-y-4">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <Input
@@ -311,7 +307,6 @@ export function EmployeeRequirementsFilters() {
           </FilterField>
         </div>
 
-        {/* Date Range Picker */}
         <FilterField label="Contract Start Date">
           <Popover>
             <PopoverTrigger asChild>

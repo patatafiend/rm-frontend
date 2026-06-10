@@ -87,7 +87,6 @@ export function EmployeeRequirementsDrawer() {
     rm_sss_no,
     rm_pagibig_no,
     rm_phhealth,
-    minor_reqs,
     minor_iss_date,
     rm_tran_no,
   } = selectedEmployee;
@@ -192,25 +191,38 @@ export function EmployeeRequirementsDrawer() {
             <Section icon={ClipboardCheck} title="Requirements Submitted">
               <div className="space-y-4">
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
-                    Minor Requirements
-                  </p>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {minor_reqs || "No pending requirements."}
-                  </p>
+                  {selectedEmployee.minor_reqs_list &&
+                  selectedEmployee.minor_reqs_list.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {selectedEmployee.minor_reqs_list.map((req, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="text-sm text-gray-700 leading-relaxed">
+                            {req}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">
+                      No requirements submitted.
+                    </p>
+                  )}
                 </div>
-                <Field
-                  label="Issue Date"
-                  value={
-                    minor_iss_date
-                      ? new Date(minor_iss_date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : undefined
-                  }
-                />
+
+                {minor_iss_date && (
+                  <Field
+                    label="Issue Date"
+                    value={new Date(minor_iss_date).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      },
+                    )}
+                  />
+                )}
               </div>
             </Section>
           </div>

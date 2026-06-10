@@ -228,6 +228,22 @@ export function CompanyRequirementsSummary() {
       </div>
       <Table>
         <TableHeader>
+          <TableRow className="border-b border-gray-100">
+            <TableHead className="h-8 px-4 py-1" />
+            <TableHead
+              colSpan={4}
+              className="h-8 px-4 py-1 text-center text-xs font-semibold border-l border-gray-200 bg-gray-50"
+            >
+              15 Days
+            </TableHead>
+            <TableHead
+              colSpan={1}
+              className="h-8 px-4 py-1 text-center text-xs font-semibold border-l border-gray-200 bg-gray-50"
+            >
+              30 Days
+            </TableHead>
+            <TableHead className="h-8 px-4 py-1 border-l border-gray-200" />
+          </TableRow>
           <TableRow className="border-b border-gray-200">
             <TableHead className="h-10 px-4 py-2 text-left text-xs font-semibold text-gray-700 ">
               Company
@@ -245,7 +261,7 @@ export function CompanyRequirementsSummary() {
               Total
             </TableHead>
             <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
-              30 Days
+              Requirements
             </TableHead>
             <TableHead className="h-10 px-4 py-2 text-center text-xs font-semibold text-gray-700 border-l border-gray-200">
               Minor Req Compliance %

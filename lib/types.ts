@@ -205,6 +205,7 @@ export interface EmployeeRequirement {
   rm_pagibig_no: string;
   rm_phhealth: string;
   minor_reqs: string;
+  minor_reqs_list?:string[];
   minor_iss_date: string;
 }
 
