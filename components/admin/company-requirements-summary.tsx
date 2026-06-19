@@ -74,10 +74,10 @@ const exportToExcel = (companies: CompanyRow[], totals: TotalsRow) => {
       "Lacking SSS",
       "Lacking Pag-IBIG",
       "Lacking PhilHealth",
-      "Missing Any Major",
-      "Minor Incomplete",
-      "Minor Req Compliance %",
-      "Major Req Compliance %",
+      "Missing Any Government IDS",
+      "Other Requirements Incomplete",
+      "Other Requirements Compliance %",
+      "Government ID Compliance %",
     ],
   ];
 

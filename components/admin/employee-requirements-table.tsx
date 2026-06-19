@@ -182,12 +182,12 @@ export function EmployeeRequirementsTable({
               </TableHead>
               <TableHead className="py-3 px-4">
                 <span className="font-medium text-xs uppercase tracking-wide text-gray-500">
-                  Major Docs
+                  Government IDs
                 </span>
               </TableHead>
               <TableHead className="py-3 px-4">
                 <span className="font-medium text-xs uppercase tracking-wide text-gray-500">
-                  Minor Req Docs
+                  Other Requirements
                 </span>
               </TableHead>
               <TableHead className="py-3 px-4 text-right">

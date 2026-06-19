@@ -160,7 +160,7 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="Minor Req Status">
+          <FilterField label="Other Requirements Status">
             <Select
               value={filters.minorReqCompleteness}
               onValueChange={(val) =>
@@ -220,7 +220,7 @@ export function EmployeeRequirementsFilters() {
             </Select>
           </FilterField>
 
-          <FilterField label="Major Req Status">
+          <FilterField label="Government ID Status">
             <Select
               value={filters.reqStatus}
               onValueChange={(val) =>
