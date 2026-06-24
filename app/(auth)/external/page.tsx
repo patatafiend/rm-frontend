@@ -23,6 +23,7 @@ function ExternalAuthHandler() {
 
     // Redirect to dashboard
     router.replace("/dashboard");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
