@@ -18,7 +18,7 @@ export function useLogin() {
       }
       setTokens(res.access_token, res.refresh_token)
       setUser(res.user)
-      router.push("/dashboard")
+      router.push("/")
     },
   })
 }
