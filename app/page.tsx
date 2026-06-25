@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ClipboardList, ArrowRight } from "lucide-react";
+import { ClipboardList, BarChart3, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 
 const SYSTEMS = [
@@ -13,6 +13,15 @@ const SYSTEMS = [
     icon: ClipboardList,
     color: "bg-blue-50 border-blue-100 text-blue-600",
     iconBg: "bg-blue-600",
+  },
+  {
+    id: "ap",
+    name: "Analytics Portal",
+    description: "Visualize and explore your hiring pipeline data.",
+    href: "/analytics",
+    icon: BarChart3,
+    color: "bg-violet-50 border-violet-100 text-violet-600",
+    iconBg: "bg-violet-600",
   },
 ] as const;
 

@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Requirements Monitoring",
-  description: "Requirements Monitoring Platform",
+  title: "OneHR Portals",
+  description: "OneHR Platform",
 };
 
 export default function RootLayout({
