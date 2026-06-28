@@ -75,36 +75,43 @@ export interface RawParams {
 }
 
 export const analyticsApi = {
-  statusCounts: async (refresh = false): Promise<AnalyticsResponse<StatusCount>> => {
+  statusCounts: async (refresh = false, bu?: string): Promise<AnalyticsResponse<StatusCount>> => {
     const { data } = await apiClient.get("/analytics/status-counts", {
-      params: { refresh },
+      params: { refresh, ...(bu ? { bu } : {}) },
     });
     return data;
   },
 
-  funnel: async (refresh = false): Promise<AnalyticsResponse<FunnelStage>> => {
+  funnel: async (refresh = false, bu?: string): Promise<AnalyticsResponse<FunnelStage>> => {
     const { data } = await apiClient.get("/analytics/funnel", {
-      params: { refresh },
+      params: { refresh, ...(bu ? { bu } : {}) },
     });
     return data;
   },
 
-  timeMetrics: async (refresh = false): Promise<AnalyticsResponse<TimeMetric>> => {
+  timeMetrics: async (refresh = false, bu?: string): Promise<AnalyticsResponse<TimeMetric>> => {
     const { data } = await apiClient.get("/analytics/time-metrics", {
-      params: { refresh },
+      params: { refresh, ...(bu ? { bu } : {}) },
     });
     return data;
   },
 
-  weeklyTrend: async (weeks = 12, refresh = false): Promise<AnalyticsResponse<WeeklyTrendPoint>> => {
+  weeklyTrend: async (weeks = 12, refresh = false, bu?: string): Promise<AnalyticsResponse<WeeklyTrendPoint>> => {
     const { data } = await apiClient.get("/analytics/weekly-trend", {
-      params: { weeks, refresh },
+      params: { weeks, refresh, ...(bu ? { bu } : {}) },
     });
     return data;
   },
 
   raw: async (params: RawParams = {}): Promise<AnalyticsResponse<RawApplicant>> => {
     const { data } = await apiClient.get("/analytics/raw", { params });
+    return data;
+  },
+
+  buList: async (refresh = false): Promise<{ data: string[] }> => {
+    const { data } = await apiClient.get("/analytics/bu-list", {
+      params: { refresh },
+    });
     return data;
   },
 };

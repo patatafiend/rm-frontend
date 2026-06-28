@@ -39,14 +39,14 @@ export function ApSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/">
                     <Home className="h-4 w-4" />
                     Portal Home
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/analytics">

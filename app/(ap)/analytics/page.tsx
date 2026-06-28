@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnalyticsDashboard, useAnalyticsRefresh } from "@/systems/ap/hooks/useAnalytics";
+import { useAnalyticsDashboard, useAnalyticsRefresh, useAnalyticsBuList } from "@/systems/ap/hooks/useAnalytics";
 import { useAnalyticsStore } from "@/systems/ap/store/analytics.store";
 import { StatusBarChart } from "@/systems/ap/components/analytics/status-bar-chart";
 import { HiringFunnelChart } from "@/systems/ap/components/analytics/hiring-funnel-chart";
@@ -9,7 +9,8 @@ import { TimeMetricsChart } from "@/systems/ap/components/analytics/time-metrics
 import { DataQualityBanner } from "@/systems/ap/components/analytics/data-quality-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Users, UserCheck, Clock, TrendingUp, RefreshCw } from "lucide-react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Users, UserCheck, Clock, RefreshCw } from "lucide-react";
 
 function KpiCard({
   label,
@@ -53,13 +54,16 @@ function KpiCard({
 export default function AnalyticsDashboard() {
   const { isLoading, isRefetching } = useAnalyticsDashboard();
   const { refresh } = useAnalyticsRefresh();
+  useAnalyticsBuList();
 
   const {
     statusCounts,
-    funnelStages,
     timeMetrics,
     timeMetricsNote,
     funnelNote,
+    selectedBu,
+    buList,
+    setSelectedBu,
   } = useAnalyticsStore();
 
   const totalApplicants = statusCounts.reduce((sum, s) => sum + s.count, 0);
@@ -77,12 +81,10 @@ export default function AnalyticsDashboard() {
         )
       : "—";
 
-  const firstFunnelConversion = funnelStages[1]?.conversion_from_prev;
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-gray-900">
             Hiring Pipeline Analytics
@@ -91,16 +93,38 @@ export default function AnalyticsDashboard() {
             Real-time overview of your recruitment funnel
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={refresh}
-          disabled={isRefetching}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
-          {isRefetching ? "Refreshing…" : "Refresh"}
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {/* BU Filter */}
+          <Select
+            value={selectedBu ?? "all"}
+            onValueChange={(v) => setSelectedBu(v === "all" ? null : v)}
+          >
+            <SelectTrigger className="h-8 w-52 text-xs">
+              <SelectValue placeholder="All BUs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All BUs</SelectItem>
+              {buList.map((bu) => (
+                <SelectItem key={bu} value={bu} className="text-xs">
+                  {bu}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Refresh */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={refresh}
+            disabled={isRefetching}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+            {isRefetching ? "Refreshing…" : "Refresh"}
+          </Button>
+        </div>
       </div>
 
       {/* Data Quality */}
@@ -135,18 +159,6 @@ export default function AnalyticsDashboard() {
           color="bg-amber-500"
           isLoading={isLoading}
         />
-        {/* <KpiCard
-          label="Pipeline Conversion"
-          value={
-            firstFunnelConversion != null
-              ? `${(firstFunnelConversion * 100).toFixed(1)}%`
-              : "—"
-          }
-          sub="applicant → medical"
-          icon={TrendingUp}
-          color="bg-blue-500"
-          isLoading={isLoading}
-        /> */}
       </div>
 
       {/* Charts row 1 */}

@@ -35,10 +35,16 @@ interface AnalyticsState {
   loading: boolean;
   error: string | null;
 
-  // Filters
+  // Filters (raw data table)
   filters: AnalyticsFilters;
   setFilter: (key: keyof AnalyticsFilters, value: string) => void;
   resetFilters: () => void;
+
+  // Global BU filter (dashboard)
+  selectedBu: string | null;
+  buList: string[];
+  setSelectedBu: (bu: string | null) => void;
+  setBuList: (list: string[]) => void;
 
   // Pagination
   setPage: (offset: number) => void;
@@ -60,12 +66,14 @@ const DEFAULT_FILTERS: AnalyticsFilters = {
 };
 
 export const useAnalyticsStore = create<AnalyticsState>((set) => ({
+  // Data
   statusCounts: [],
   funnelStages: [],
   timeMetrics: [],
   weeklyTrend: [],
   rawData: [],
 
+  // Metadata
   rawTotal: 0,
   rawOffset: 0,
   rawLimit: 50,
@@ -74,21 +82,32 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   funnelNote: null,
   timeMetricsNote: null,
 
+  // Loading / error
   loading: false,
   error: null,
 
+  // Filters (raw data table)
   filters: DEFAULT_FILTERS,
 
   setFilter: (key, value) =>
     set((state) => ({
       filters: { ...state.filters, [key]: value },
-      rawOffset: 0, // reset pagination on filter change
+      rawOffset: 0,
     })),
 
   resetFilters: () => set({ filters: DEFAULT_FILTERS, rawOffset: 0 }),
 
+  // Global BU filter (dashboard)
+  selectedBu: null,
+  buList: [],
+
+  setSelectedBu: (bu) => set({ selectedBu: bu }),
+  setBuList: (list) => set({ buList: list }),
+
+  // Pagination
   setPage: (offset) => set({ rawOffset: offset }),
 
+  // Setters
   setStatusCounts: (data, meta) =>
     set({
       statusCounts: data,

@@ -16,12 +16,13 @@ export function useAnalyticsDashboard(refresh = false) {
     setWeeklyTrend,
     setLoading,
     setError,
+    selectedBu,          // ← add this
   } = useAnalyticsStore();
 
   const statusQuery = useQuery({
-    queryKey: ["ap", "status-counts", accessToken, refresh],
+    queryKey: ["ap", "status-counts", accessToken, refresh, selectedBu],   // ← add selectedBu
     queryFn: async () => {
-      const res = await analyticsApi.statusCounts(refresh);
+      const res = await analyticsApi.statusCounts(refresh, selectedBu ?? undefined);  // ← pass bu
       setStatusCounts(res.data, res.meta);
       return res;
     },
@@ -30,9 +31,9 @@ export function useAnalyticsDashboard(refresh = false) {
   });
 
   const funnelQuery = useQuery({
-    queryKey: ["ap", "funnel", accessToken, refresh],
+    queryKey: ["ap", "funnel", accessToken, refresh, selectedBu],          // ← add selectedBu
     queryFn: async () => {
-      const res = await analyticsApi.funnel(refresh);
+      const res = await analyticsApi.funnel(refresh, selectedBu ?? undefined);        // ← pass bu
       setFunnelStages(res.data, res.note);
       return res;
     },
@@ -41,9 +42,9 @@ export function useAnalyticsDashboard(refresh = false) {
   });
 
   const timeQuery = useQuery({
-    queryKey: ["ap", "time-metrics", accessToken, refresh],
+    queryKey: ["ap", "time-metrics", accessToken, refresh, selectedBu],    // ← add selectedBu
     queryFn: async () => {
-      const res = await analyticsApi.timeMetrics(refresh);
+      const res = await analyticsApi.timeMetrics(refresh, selectedBu ?? undefined);   // ← pass bu
       setTimeMetrics(res.data, res.note);
       return res;
     },
@@ -52,9 +53,9 @@ export function useAnalyticsDashboard(refresh = false) {
   });
 
   const trendQuery = useQuery({
-    queryKey: ["ap", "weekly-trend", accessToken, refresh],
+    queryKey: ["ap", "weekly-trend", accessToken, refresh, selectedBu],    // ← add selectedBu
     queryFn: async () => {
-      const res = await analyticsApi.weeklyTrend(12, refresh);
+      const res = await analyticsApi.weeklyTrend(12, refresh, selectedBu ?? undefined); // ← pass bu
       setWeeklyTrend(res.data);
       return res;
     },
@@ -151,4 +152,20 @@ export function useAnalyticsRefresh() {
   };
 
   return { refresh };
+}
+
+export function useAnalyticsBuList() {
+  const { accessToken } = useAuthStore();
+  const { setBuList } = useAnalyticsStore();
+
+  return useQuery({
+    queryKey: ["ap", "bu-list", accessToken],
+    queryFn: async () => {
+      const res = await analyticsApi.buList();
+      setBuList(res.data);
+      return res;
+    },
+    staleTime: STALE_TIME,
+    enabled: !!accessToken,
+  });
 }
