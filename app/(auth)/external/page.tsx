@@ -12,20 +12,24 @@ function ExternalAuthHandler() {
 
   useEffect(() => {
     const token = searchParams.get("token");
+    const redirect = searchParams.get("redirect") ?? "/dashboard";
 
     if (!token) {
       router.replace("/login?error=missing_token");
       return;
     }
 
-    // Store the token — no refresh token for external users
-    setTokens(token, "");
+    useAuthStore.getState().clear();
+    useAuthStore.getState().setTokens(token, "");
 
-    // Redirect to dashboard
-    router.replace("/dashboard");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Wait for Zustand persist to flush to localStorage before navigating
+    setTimeout(() => {
+      router.replace(redirect);
+    }, 100);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+  
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">

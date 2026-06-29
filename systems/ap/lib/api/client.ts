@@ -56,9 +56,9 @@ apiClient.interceptors.response.use(
     const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
     if (!refreshToken) {
-      clear();
-      window.location.href = "/login";
-      return Promise.reject(error);
+      isRefreshing = false;
+      const errorMessage = getErrorMessage(error);
+      return Promise.reject(new Error(errorMessage));
     }
 
     try {

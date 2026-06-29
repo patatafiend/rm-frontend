@@ -12,7 +12,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import { SidebarUserFooter } from "@/components/sidebar-user-footer";
-import { BarChart3, Home } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import Link from "next/link";
 
 export function ApSidebar() {
