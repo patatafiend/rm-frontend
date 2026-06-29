@@ -1,22 +1,27 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage } from "@/lib/utils/errors";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+import { getApiUrl } from "./config";
 
 export const apiClient = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
 });
 
-// --- Request interceptor: attach access token ---
-apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// --- Inject baseURL dynamically before each request ---
+apiClient.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    if (!config.baseURL) {
+      const baseUrl = await getApiUrl();
+      config.baseURL = `${baseUrl}/api/v1`;
+    }
+
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+);
 
 // --- Response interceptor: auto-refresh on 401 ---
 let isRefreshing = false;
@@ -38,7 +43,6 @@ apiClient.interceptors.response.use(
     };
 
     if (error.response?.status !== 401 || original._retry) {
-      // For non-401 errors, extract error message and throw structured error
       const errorMessage = getErrorMessage(error);
       const structuredError = new Error(errorMessage);
       return Promise.reject(structuredError);
@@ -58,7 +62,6 @@ apiClient.interceptors.response.use(
 
     const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
-    // External users have no refresh token — clear and redirect
     if (!refreshToken) {
       clear();
       window.location.href = "/login";
@@ -66,11 +69,10 @@ apiClient.interceptors.response.use(
     }
 
     try {
+      const baseUrl = await getApiUrl();
       const { data } = await axios.post(
-        `${BASE_URL}/api/v1/auth/refresh-token`,
-        {
-          refresh_token: refreshToken,
-        },
+        `${baseUrl}/api/v1/auth/refresh-token`,
+        { refresh_token: refreshToken },
       );
       setTokens(data.access_token, data.refresh_token || refreshToken!);
       processQueue(null, data.access_token);

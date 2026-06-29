@@ -1,22 +1,29 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage } from "@/lib/utils/errors";
-
-const BASE_URL = process.env.NEXT_PUBLIC_AP_API_URL ?? "http://localhost:8001";
+import { getApiUrl } from "@/lib/api/config";
 
 export const apiClient = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
   headers: { "Content-Type": "application/json" },
 });
 
-apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// --- Inject baseURL dynamically before each request ---
+apiClient.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    if (!config.baseURL) {
+      const baseUrl = await getApiUrl();
+      config.baseURL = `${baseUrl}/api/v1`;
+    }
 
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+);
+
+// --- Response interceptor: auto-refresh on 401 ---
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -56,14 +63,15 @@ apiClient.interceptors.response.use(
     const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
     if (!refreshToken) {
-      isRefreshing = false;
-      const errorMessage = getErrorMessage(error);
-      return Promise.reject(new Error(errorMessage));
+      clear();
+      window.location.href = "/login";
+      return Promise.reject(error);
     }
 
     try {
+      const baseUrl = await getApiUrl();
       const { data } = await axios.post(
-        `${BASE_URL}/api/v1/auth/refresh-token`,
+        `${baseUrl}/api/v1/auth/refresh-token`,
         { refresh_token: refreshToken },
       );
       setTokens(data.access_token, data.refresh_token || refreshToken!);

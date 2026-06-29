@@ -17,7 +17,7 @@ export default function DashBoard() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900 leading-tight">
-              Company Requirements Summary
+              Onboarding Requirements Summary
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               Overview of onboarding compliance by company
