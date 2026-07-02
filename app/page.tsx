@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ClipboardList, BarChart3, ArrowRight } from "lucide-react";
+import { ClipboardList, BarChart3, ArrowRight, Paperclip } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 
 const SYSTEMS = [
@@ -22,6 +22,15 @@ const SYSTEMS = [
     icon: BarChart3,
     color: "bg-violet-50 border-violet-100 text-violet-600",
     iconBg: "bg-violet-600",
+  },
+  {
+    id: "pam",
+    name: "Performance Appraisal Portal",
+    description: "Manage employees performance appraisal every month.",
+    href: "/appraisals",
+    icon: Paperclip,
+    color: "bg-red-50 border-red-100 text-red-600",
+    iconBg: "bg-red-600",
   },
 ] as const;
 

@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 function ExternalAuthHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setTokens } = useAuthStore();
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -19,17 +18,16 @@ function ExternalAuthHandler() {
       return;
     }
 
-    useAuthStore.getState().clear();
-    useAuthStore.getState().setTokens(token, "");
+    // Single atomic update — no clear() triggering a null accessToken flash
+    useAuthStore.setState({
+      accessToken: token,
+      refreshToken: null,
+      user: null,
+    });
 
-    // Wait for Zustand persist to flush to localStorage before navigating
-    setTimeout(() => {
-      router.replace(redirect);
-    }, 100);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    router.replace(redirect);
   }, []);
-  
+
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">

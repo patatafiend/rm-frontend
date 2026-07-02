@@ -64,7 +64,7 @@ apiClient.interceptors.response.use(
 
     if (!refreshToken) {
       clear();
-      window.location.href = "/login";
+      window.location.href = "/login?error=session_expired";
       return Promise.reject(error);
     }
 
