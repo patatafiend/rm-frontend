@@ -11,7 +11,7 @@ import type {
 export const appraisalsApi = {
   list(status?: string): Promise<AppraisalListResponse> {
     return apiClient
-      .get("/appraisals/for-regularization", {
+      .get("/appraisals", {
         params: status ? { status } : undefined,
       })
       .then(({ data }) => data);
