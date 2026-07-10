@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -37,6 +38,14 @@ interface Props {
 
 const PAGE_SIZE = 10;
 
+type SortKey = "employee" | "company" | "bu" | "dueDate" | "daysOverdue";
+type SortDirection = "asc" | "desc";
+
+interface SortConfig {
+  key: SortKey;
+  direction: SortDirection;
+}
+
 function getPageWindows(current: number, total: number): (number | "...")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
@@ -58,11 +67,47 @@ function getPageWindows(current: number, total: number): (number | "...")[] {
 
 type StatusFilter = "all" | "pending" | "overdue" | "done";
 
+// Declared OUTSIDE AppraisalTable so these aren't recreated (and don't reset
+// their identity) on every render. They receive sortConfig/onSort as props
+// instead of closing over component-local state.
+function SortIcon({ column, sortConfig }: { column: SortKey; sortConfig: SortConfig | null }) {
+  if (!sortConfig || sortConfig.key !== column) {
+    return <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground/50" />;
+  }
+  return sortConfig.direction === "asc" ? (
+    <ArrowUp className="ml-1 h-3.5 w-3.5" />
+  ) : (
+    <ArrowDown className="ml-1 h-3.5 w-3.5" />
+  );
+}
+
+function SortableHead({
+  column,
+  sortConfig,
+  onSort,
+  children,
+}: {
+  column: SortKey;
+  sortConfig: SortConfig | null;
+  onSort: (key: SortKey) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <TableHead className="cursor-pointer select-none" onClick={() => onSort(column)}>
+      <span className="flex items-center">
+        {children}
+        <SortIcon column={column} sortConfig={sortConfig} />
+      </span>
+    </TableHead>
+  );
+}
+
 export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
   const { setSelectedEmployee } = useAppraisalStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -96,8 +141,46 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
     });
   }, [records, search, statusFilter, dueDateField]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const sorted = useMemo(() => {
+    if (!sortConfig) return filtered;
+
+    const { key, direction } = sortConfig;
+    const dir = direction === "asc" ? 1 : -1;
+
+    const getValue = (r: AppraisalRecord): string | number => {
+      switch (key) {
+        case "employee":
+          return (
+            r.employee_name ?? `${r.rm_lastname ?? ""}, ${r.rm_first_name ?? ""}`
+          ).toLowerCase();
+        case "company":
+          return (r.hr_company ?? "").toLowerCase();
+        case "bu":
+          return (r.bu_tagging ?? "").toLowerCase();
+        case "dueDate": {
+          const raw = r[dueDateField];
+          return raw ? new Date(raw).getTime() : direction === "asc" ? Infinity : -Infinity;
+        }
+        case "daysOverdue": {
+          const d = getDaysOverdue(r, dueDateField);
+          return d ?? (direction === "asc" ? Infinity : -Infinity);
+        }
+        default:
+          return "";
+      }
+    };
+
+    return [...filtered].sort((a, b) => {
+      const va = getValue(a);
+      const vb = getValue(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }, [filtered, sortConfig, dueDateField]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function handleSearchChange(value: string) {
     setSearch(value);
@@ -106,6 +189,15 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
 
   function handleStatusChange(value: string) {
     setStatusFilter(value as StatusFilter);
+    setPage(1);
+  }
+
+  function handleSort(key: SortKey) {
+    setSortConfig((prev) => {
+      if (!prev || prev.key !== key) return { key, direction: "asc" };
+      if (prev.direction === "asc") return { key, direction: "desc" };
+      return null; // third click clears sorting
+    });
     setPage(1);
   }
 
@@ -140,12 +232,22 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>BU</TableHead>
-              <TableHead>{dueDateLabel}</TableHead>
+              <SortableHead column="employee" sortConfig={sortConfig} onSort={handleSort}>
+                Employee
+              </SortableHead>
+              <SortableHead column="company" sortConfig={sortConfig} onSort={handleSort}>
+                Company
+              </SortableHead>
+              <SortableHead column="bu" sortConfig={sortConfig} onSort={handleSort}>
+                BU
+              </SortableHead>
+              <SortableHead column="dueDate" sortConfig={sortConfig} onSort={handleSort}>
+                {dueDateLabel}
+              </SortableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Days Overdue</TableHead>
+              <SortableHead column="daysOverdue" sortConfig={sortConfig} onSort={handleSort}>
+                Days Overdue
+              </SortableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -198,8 +300,8 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          Showing {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
-          {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+          Showing {sorted.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
+          {Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
         </span>
         <div className="flex items-center gap-1">
           <Button

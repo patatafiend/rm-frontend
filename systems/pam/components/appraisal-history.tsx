@@ -7,7 +7,6 @@ import { appraisalsApi } from "@/systems/pam/lib/api/appraisals";
 import { toast } from "sonner";
 import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
 import { cn } from "@/lib/utils";
-
 interface Props {
   record: AppraisalRecord;
 }

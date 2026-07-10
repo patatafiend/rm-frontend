@@ -39,9 +39,18 @@ export const appraisalsApi = {
       .then(({ data }) => data);
   },
 
-  getUploadUrl(rmTranNo: number): Promise<UploadUrlResponse> {
+  getUploadUrl(
+    rmTranNo: number,
+    contentType: string,
+  ): Promise<UploadUrlResponse> {
     return apiClient
-      .post(`/appraisals/${rmTranNo}/upload-url`, {})
+      .post(
+        `/appraisals/${rmTranNo}/upload-url`,
+        {},
+        {
+          params: { contentType: contentType },
+        },
+      )
       .then(({ data }) => data);
   },
 
