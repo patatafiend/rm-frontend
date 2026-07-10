@@ -80,7 +80,17 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
       {/* File upload (not needed for extension final decision) */}
       {needsFile && (
         <div className="space-y-1.5">
-          <p className="text-sm font-medium">Upload Performance Appraisal</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Upload Performance Appraisal</p>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 rounded-full bg-slate-800 px-4 text-xs font-medium text-white hover:bg-slate-700"
+              onClick={() => window.open(`/appraisals/${rmTranNo}/pdf`, "_blank", "noopener,noreferrer")}
+            >
+              PDF
+            </Button>
+          </div>
           <AppraisalFileUpload
             rmTranNo={rmTranNo}
             onUploadComplete={(key) => setFileKey(key)}
