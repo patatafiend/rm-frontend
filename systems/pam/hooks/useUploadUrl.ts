@@ -21,14 +21,23 @@ export function useUploadUrl(rmTranNo: number) {
   async function upload(file: File): Promise<string | null> {
     setState((s) => ({ ...s, uploading: true, error: null }));
     try {
-      const { upload_url, file_key } =
-        await appraisalsApi.getUploadUrl(rmTranNo);
+      const { upload_url, file_key } = await appraisalsApi.getUploadUrl(
+        rmTranNo,
+        file.type,
+      );
 
-      await fetch(upload_url, {
+      const res = await fetch(upload_url, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(
+          `Upload failed (${res.status}): ${text || res.statusText}`,
+        );
+      }
 
       setState({
         fileKey: file_key,

@@ -1,4 +1,3 @@
-import { AppraisalTabs } from "@/systems/pam/components/appraisal-tabs";
 import { AppraisalDrawer } from "@/systems/pam/components/appraisal-drawer";
 import { AppraisalsLoader } from "@/systems/pam/components/appraisal-loader";
 export default function AppraisalsPage() {
