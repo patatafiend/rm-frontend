@@ -3,7 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
 import { appraisalsApi } from "@/systems/pam/lib/api/appraisals";
-import { getMilestoneTab } from "@/systems/pam/types/appraisal";
+import {
+  getMilestoneTab,
+  isMilestoneResolved,
+} from "../lib/utils/appraisal-table";
 import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
 
 const STALE_TIME = 2 * 60 * 1000;
@@ -25,7 +28,8 @@ export function useAppraisals() {
   // Extension tab: only those with fifth_month_decision EXTENSION and no final decision yet
   const extension = all.filter(
     (r) =>
-      getMilestoneTab(r) === "extension" && !r.extension_final_decision,
+      getMilestoneTab(r) === "extension" &&
+      !isMilestoneResolved(r, "extension_until"),
   );
 
   return {

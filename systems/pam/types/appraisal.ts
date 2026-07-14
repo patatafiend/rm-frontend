@@ -11,7 +11,12 @@ export type FifthMonthDecision =
   | "REGULARIZATION"
   | "NON_REGULARIZATION"
   | "EXTENSION";
-export type ExtensionDecision = "REGULARIZATION" | "NON_REGULARIZATION";
+
+// "EXTENSION" here means "extend again" within an extension record
+export type ExtensionDecision =
+  | "REGULARIZATION"
+  | "NON_REGULARIZATION"
+  | "EXTENSION";
 
 export type FailsafeReason =
   | "NO_3RD_MONTH_APPRAISAL"
@@ -24,7 +29,17 @@ export type ActiveMilestone =
   | "EXTENSION"
   | "RESOLVED";
 
-export interface AppraisalRecord {
+export type ExtensionRecord = {
+  id: number;
+  sequence: number;
+  extension_until: string | null;
+  granted_at: string | null;
+  decision: ExtensionDecision | null;
+  appraisal_file_key: string | null;
+  decided_at: string | null;
+};
+
+export type AppraisalRecord = {
   rm_tran_no: number;
   erms_id: number;
   employee_name?: string;
@@ -49,15 +64,14 @@ export interface AppraisalRecord {
   fifth_month_decided_at?: string | null;
   fifth_month_notified_at?: string | null;
 
-  extension_until?: string | null;
-  extension_final_decision?: ExtensionDecision | null;
-  extension_decided_at?: string | null;
+  // Replaces the old flat extension_until / extension_final_decision / extension_decided_at
+  extension_records: ExtensionRecord[];
 
   appraisal_status: AppraisalStatus;
   failsafe_reason?: FailsafeReason | null;
   failsafe_triggered_at?: string | null;
   confirmed_at?: string | null;
-}
+};
 
 export interface ThirdMonthPayload {
   decision: ThirdMonthDecision;
@@ -66,12 +80,14 @@ export interface ThirdMonthPayload {
 
 export interface FifthMonthPayload {
   decision: FifthMonthDecision;
-  appraisal_file_key: string;
+  appraisal_file_key: string | undefined;
   extension_until?: string;
 }
 
 export interface ExtensionPayload {
   decision: ExtensionDecision;
+  appraisal_file_key?: string;
+  extension_until?: string;
 }
 
 export interface AppraisalListResponse {
@@ -89,25 +105,24 @@ export interface DownloadUrlResponse {
   download_url: string;
 }
 
-// Derives which tab a record belongs to — used for client-side tab splitting
-export function getMilestoneTab(
-  record: AppraisalRecord,
-): "third" | "fifth" | "extension" {
-  if (record.fifth_month_decision === "EXTENSION") return "extension";
-  if (record.third_month_decision === "PROCEED_5TH") return "fifth";
-  return "third";
+export type SortKey = "employee" | "company" | "bu" | "dueDate" | "daysOverdue";
+export type SortDirection = "asc" | "desc";
+export type SortConfig = {
+  key: SortKey;
+  direction: SortDirection;
 }
 
-// Derives the currently active (pending) milestone for the action panel
-export function getActiveMilestone(record: AppraisalRecord): ActiveMilestone {
-  if (
-    record.appraisal_status === "REGULARIZED" ||
-    record.appraisal_status === "NON_REGULARIZED" ||
-    record.appraisal_status === "RESOLVED_MANUAL"
-  ) {
-    return "RESOLVED";
-  }
-  if (record.fifth_month_decision === "EXTENSION") return "EXTENSION";
-  if (record.third_month_decision === "PROCEED_5TH") return "FIFTH_MONTH";
-  return "THIRD_MONTH";
+export type StatusFilter = "all" | "pending" | "overdue" | "done";
+export type ResolvedStatusFilter = "all" | "REGULARIZED" | "NON_REGULARIZED" | "RESOLVED_MANUAL";
+
+export type DueDateField =
+  | "third_month_due_date"
+  | "fifth_month_due_date"
+  | "extension_until";
+
+export type AppraisalTableProps = {
+  records: AppraisalRecord[];
+  dueDateField: DueDateField;
+  dueDateLabel: string;
+  resolvedOnly?: boolean;
 }

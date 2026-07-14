@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -22,97 +22,52 @@ import {
 import { Button } from "@/components/ui/button";
 import { AppraisalBadge, getDaysOverdue } from "./appraisal-badge";
 import { useAppraisalStore } from "@/systems/pam/store/appraisals.store";
-import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
+import {
+  AppraisalRecord,
+  AppraisalTableProps,
+  StatusFilter,
+  SortConfig,
+  SortKey,
+  ResolvedStatusFilter,
+} from "@/systems/pam/types/appraisal";
+import {
+  SortableHead,
+  getPageWindows,
+  getDueDate,
+  isMilestoneResolved,
+  getDisplayDate,
+} from "../lib/utils/appraisal-table";
 import { cn } from "@/lib/utils";
-
-type DueDateField =
-  | "third_month_due_date"
-  | "fifth_month_due_date"
-  | "extension_until";
-
-interface Props {
-  records: AppraisalRecord[];
-  dueDateField: DueDateField;
-  dueDateLabel: string;
-}
 
 const PAGE_SIZE = 10;
 
-type SortKey = "employee" | "company" | "bu" | "dueDate" | "daysOverdue";
-type SortDirection = "asc" | "desc";
-
-interface SortConfig {
-  key: SortKey;
-  direction: SortDirection;
-}
-
-function getPageWindows(current: number, total: number): (number | "...")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-  const pages = new Set<number>();
-  pages.add(1);
-  pages.add(total);
-  for (let i = Math.max(2, current - 2); i <= Math.min(total - 1, current + 2); i++) {
-    pages.add(i);
-  }
-
-  const sorted = Array.from(pages).sort((a, b) => a - b);
-  const result: (number | "...")[] = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("...");
-    result.push(sorted[i]);
-  }
-  return result;
-}
-
-type StatusFilter = "all" | "pending" | "overdue" | "done";
-
-// Declared OUTSIDE AppraisalTable so these aren't recreated (and don't reset
-// their identity) on every render. They receive sortConfig/onSort as props
-// instead of closing over component-local state.
-function SortIcon({ column, sortConfig }: { column: SortKey; sortConfig: SortConfig | null }) {
-  if (!sortConfig || sortConfig.key !== column) {
-    return <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground/50" />;
-  }
-  return sortConfig.direction === "asc" ? (
-    <ArrowUp className="ml-1 h-3.5 w-3.5" />
-  ) : (
-    <ArrowDown className="ml-1 h-3.5 w-3.5" />
-  );
-}
-
-function SortableHead({
-  column,
-  sortConfig,
-  onSort,
-  children,
-}: {
-  column: SortKey;
-  sortConfig: SortConfig | null;
-  onSort: (key: SortKey) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <TableHead className="cursor-pointer select-none" onClick={() => onSort(column)}>
-      <span className="flex items-center">
-        {children}
-        <SortIcon column={column} sortConfig={sortConfig} />
-      </span>
-    </TableHead>
-  );
-}
-
-export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
+export function AppraisalTable({
+  records,
+  dueDateField,
+  dueDateLabel,
+  resolvedOnly,
+}: AppraisalTableProps) {
   const { setSelectedEmployee } = useAppraisalStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [resolvedStatusFilter, setResolvedStatusFilter] =
+    useState<ResolvedStatusFilter>("all");
+
+  const isTerminal = (r: AppraisalRecord) =>
+    ["REGULARIZED", "NON_REGULARIZED", "RESOLVED_MANUAL"].includes(
+      r.appraisal_status,
+    );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return records.filter((r) => {
-      const name = (r.employee_name ?? `${r.rm_lastname} ${r.rm_first_name}`).toLowerCase();
+    const base = resolvedOnly ? records.filter(isTerminal) : records;
+
+    return base.filter((r) => {
+      const name = (
+        r.employee_name ?? `${r.rm_lastname} ${r.rm_first_name}`
+      ).toLowerCase();
       const matchesSearch =
         !q ||
         name.includes(q) ||
@@ -121,15 +76,19 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
 
       if (!matchesSearch) return false;
 
+      if (resolvedOnly) {
+        return (
+          resolvedStatusFilter === "all" ||
+          r.appraisal_status === resolvedStatusFilter
+        );
+      }
+
       if (statusFilter === "all") return true;
 
-      const dueRaw = r[dueDateField];
-      const hasDecision =
-        (dueDateField === "third_month_due_date" && r.third_month_decision) ||
-        (dueDateField === "fifth_month_due_date" && r.fifth_month_decision) ||
-        (dueDateField === "extension_until" && r.extension_final_decision);
+      const dueRaw = getDueDate(r, dueDateField);
+      const hasDecision = isMilestoneResolved(r, dueDateField);
 
-      if (statusFilter === "done") return !!hasDecision;
+      if (statusFilter === "done") return hasDecision;
       if (hasDecision) return false;
 
       if (dueRaw) {
@@ -139,7 +98,14 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
       }
       return statusFilter === "pending";
     });
-  }, [records, search, statusFilter, dueDateField]);
+  }, [
+    records,
+    search,
+    statusFilter,
+    resolvedStatusFilter,
+    resolvedOnly,
+    dueDateField,
+  ]);
 
   const sorted = useMemo(() => {
     if (!sortConfig) return filtered;
@@ -151,15 +117,20 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
       switch (key) {
         case "employee":
           return (
-            r.employee_name ?? `${r.rm_lastname ?? ""}, ${r.rm_first_name ?? ""}`
+            r.employee_name ??
+            `${r.rm_lastname ?? ""}, ${r.rm_first_name ?? ""}`
           ).toLowerCase();
         case "company":
           return (r.hr_company ?? "").toLowerCase();
         case "bu":
           return (r.bu_tagging ?? "").toLowerCase();
         case "dueDate": {
-          const raw = r[dueDateField];
-          return raw ? new Date(raw).getTime() : direction === "asc" ? Infinity : -Infinity;
+          const raw = getDueDate(r, dueDateField);
+          return raw
+            ? new Date(raw).getTime()
+            : direction === "asc"
+              ? Infinity
+              : -Infinity;
         }
         case "daysOverdue": {
           const d = getDaysOverdue(r, dueDateField);
@@ -201,9 +172,6 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
     setPage(1);
   }
 
-  const isTerminal = (r: AppraisalRecord) =>
-    ["REGULARIZED", "NON_REGULARIZED", "RESOLVED_MANUAL"].includes(r.appraisal_status);
-
   return (
     <div className="flex flex-col gap-4">
       {/* Filters */}
@@ -214,17 +182,37 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
           onChange={(e) => handleSearchChange(e.target.value)}
           className="max-w-sm"
         />
-        <Select value={statusFilter} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
-          </SelectContent>
-        </Select>
+        {resolvedOnly ? (
+          <Select
+            value={resolvedStatusFilter}
+            onValueChange={(v) => {
+              setResolvedStatusFilter(v as ResolvedStatusFilter);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="REGULARIZED">Regularized</SelectItem>
+              <SelectItem value="NON_REGULARIZED">Non-Regularized</SelectItem>
+              <SelectItem value="RESOLVED_MANUAL">Resolved Manual</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Table */}
@@ -232,20 +220,40 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <SortableHead column="employee" sortConfig={sortConfig} onSort={handleSort}>
+              <SortableHead
+                column="employee"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 Employee
               </SortableHead>
-              <SortableHead column="company" sortConfig={sortConfig} onSort={handleSort}>
+              <SortableHead
+                column="company"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 Company
               </SortableHead>
-              <SortableHead column="bu" sortConfig={sortConfig} onSort={handleSort}>
+              <SortableHead
+                column="bu"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 BU
               </SortableHead>
-              <SortableHead column="dueDate" sortConfig={sortConfig} onSort={handleSort}>
+              <SortableHead
+                column="dueDate"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 {dueDateLabel}
               </SortableHead>
               <TableHead>Status</TableHead>
-              <SortableHead column="daysOverdue" sortConfig={sortConfig} onSort={handleSort}>
+              <SortableHead
+                column="daysOverdue"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 Days Overdue
               </SortableHead>
             </TableRow>
@@ -253,14 +261,21 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
                   No records found.
                 </TableCell>
               </TableRow>
             ) : (
               paginated.map((record) => {
                 const daysOver = getDaysOverdue(record, dueDateField);
-                const dueRaw = record[dueDateField];
+                const dueRaw = getDisplayDate(
+                  record,
+                  dueDateField,
+                  resolvedOnly,
+                );
                 const terminal = isTerminal(record);
 
                 return (
@@ -279,12 +294,17 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
                     <TableCell className="text-sm text-muted-foreground">
                       {record.hr_company ?? "—"}
                     </TableCell>
-                    <TableCell className="text-sm">{record.bu_tagging}</TableCell>
+                    <TableCell className="text-sm">
+                      {record.bu_tagging}
+                    </TableCell>
                     <TableCell className="text-sm">
                       {dueRaw ? format(parseISO(dueRaw), "MMM d, yyyy") : "—"}
                     </TableCell>
                     <TableCell>
-                      <AppraisalBadge record={record} dueDateField={dueDateField} />
+                      <AppraisalBadge
+                        record={record}
+                        dueDateField={dueDateField}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-amber-600">
                       {daysOver ? `${daysOver}d` : "—"}
@@ -314,7 +334,10 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
           </Button>
           {getPageWindows(page, totalPages).map((item, i) =>
             item === "..." ? (
-              <span key={`ellipsis-${i}`} className="w-8 text-center text-muted-foreground">
+              <span
+                key={`ellipsis-${i}`}
+                className="w-8 text-center text-muted-foreground"
+              >
                 …
               </span>
             ) : (
@@ -327,7 +350,7 @@ export function AppraisalTable({ records, dueDateField, dueDateLabel }: Props) {
               >
                 {item}
               </Button>
-            )
+            ),
           )}
           <Button
             variant="outline"
