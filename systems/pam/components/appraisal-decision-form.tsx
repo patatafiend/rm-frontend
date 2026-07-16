@@ -29,15 +29,25 @@ interface Props {
 
 export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
   const { setDrawerOpen } = useAppraisalStore();
-  const { thirdMonth, fifthMonth, extension, isPending } = useSubmitDecision(rmTranNo);
+  const { thirdMonth, fifthMonth, extension, isPending } =
+    useSubmitDecision(rmTranNo);
 
   const [fileKey, setFileKey] = useState<string | null>(null);
-  const [thirdDecision, setThirdDecision] = useState<ThirdMonthDecision | null>(null);
-  const [fifthDecision, setFifthDecision] = useState<FifthMonthDecision | null>(null);
-  const [extDecision, setExtDecision] = useState<ExtensionDecision | null>(null);
+  const [thirdDecision, setThirdDecision] =
+    useState<ThirdMonthDecision | null>(null);
+  const [fifthDecision, setFifthDecision] =
+    useState<FifthMonthDecision | null>(null);
+  const [extDecision, setExtDecision] = useState<ExtensionDecision | null>(
+    null,
+  );
   const [extensionUntil, setExtensionUntil] = useState<Date | null>(null);
 
-  const needsFile = milestone !== "EXTENSION";
+  // No file needed when the decision itself is an "extend" step —
+  // applies both at 5th month ("Extend Probation") and within an
+  // extension record ("Extend Again").
+  const needsFile =
+    !(milestone === "FIFTH_MONTH" && fifthDecision === "EXTENSION") &&
+    !(milestone === "EXTENSION" && extDecision === "EXTENSION");
   const fileReady = !needsFile || !!fileKey;
 
   const decisionReady =
@@ -45,7 +55,9 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
     (milestone === "FIFTH_MONTH" &&
       !!fifthDecision &&
       (fifthDecision !== "EXTENSION" || !!extensionUntil)) ||
-    (milestone === "EXTENSION" && !!extDecision);
+    (milestone === "EXTENSION" &&
+      !!extDecision &&
+      (extDecision !== "EXTENSION" || !!extensionUntil));
 
   const canSubmit = fileReady && decisionReady && !isPending;
 
@@ -53,17 +65,34 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
     if (!canSubmit) return;
 
     if (milestone === "THIRD_MONTH" && thirdDecision && fileKey) {
-      await thirdMonth.mutateAsync({ decision: thirdDecision, appraisal_file_key: fileKey });
-    } else if (milestone === "FIFTH_MONTH" && fifthDecision && fileKey) {
+      await thirdMonth.mutateAsync({
+        decision: thirdDecision,
+        appraisal_file_key: fileKey,
+      });
+    } else if (
+      milestone === "FIFTH_MONTH" &&
+      fifthDecision &&
+      (fifthDecision === "EXTENSION" || fileKey)
+    ) {
       await fifthMonth.mutateAsync({
         decision: fifthDecision,
-        appraisal_file_key: fileKey,
+        appraisal_file_key: fileKey ?? undefined,
         ...(fifthDecision === "EXTENSION" && extensionUntil
           ? { extension_until: format(extensionUntil, "yyyy-MM-dd") }
           : {}),
       });
-    } else if (milestone === "EXTENSION" && extDecision) {
-      await extension.mutateAsync({ decision: extDecision });
+    } else if (
+      milestone === "EXTENSION" &&
+      extDecision &&
+      (extDecision === "EXTENSION" || fileKey)
+    ) {
+      await extension.mutateAsync({
+        decision: extDecision,
+        appraisal_file_key: fileKey ?? undefined,
+        ...(extDecision === "EXTENSION" && extensionUntil
+          ? { extension_until: format(extensionUntil, "yyyy-MM-dd") }
+          : {}),
+      });
     }
 
     setDrawerOpen(false);
@@ -77,7 +106,6 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
         Action — {milestoneLabel(milestone)}
       </p>
 
-      {/* File upload (not needed for extension final decision) */}
       {needsFile && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
@@ -86,7 +114,13 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
               type="button"
               size="sm"
               className="h-7 rounded-full bg-slate-800 px-4 text-xs font-medium text-white hover:bg-slate-700"
-              onClick={() => window.open(`/appraisals/${rmTranNo}/pdf`, "_blank", "noopener,noreferrer")}
+              onClick={() =>
+                window.open(
+                  `/appraisals/${rmTranNo}/pdf`,
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
             >
               PDF
             </Button>
@@ -99,7 +133,6 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
         </div>
       )}
 
-      {/* Decision buttons */}
       <div className="space-y-1.5">
         <p className="text-sm font-medium">Decision</p>
 
@@ -126,13 +159,19 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
               label="Regularize"
               variant="positive"
               selected={fifthDecision === "REGULARIZATION"}
-              onClick={() => { setFifthDecision("REGULARIZATION"); setExtensionUntil(null); }}
+              onClick={() => {
+                setFifthDecision("REGULARIZATION");
+                setExtensionUntil(null);
+              }}
             />
             <DecisionButton
               label="Non-Regularization"
               variant="negative"
               selected={fifthDecision === "NON_REGULARIZATION"}
-              onClick={() => { setFifthDecision("NON_REGULARIZATION"); setExtensionUntil(null); }}
+              onClick={() => {
+                setFifthDecision("NON_REGULARIZATION");
+                setExtensionUntil(null);
+              }}
             />
             <DecisionButton
               label="Extend Probation"
@@ -144,60 +183,52 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
         )}
 
         {milestone === "EXTENSION" && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <DecisionButton
               label="Regularize"
               variant="positive"
               selected={extDecision === "REGULARIZATION"}
-              onClick={() => setExtDecision("REGULARIZATION")}
+              onClick={() => {
+                setExtDecision("REGULARIZATION");
+                setExtensionUntil(null);
+              }}
             />
             <DecisionButton
               label="Non-Regularization"
               variant="negative"
               selected={extDecision === "NON_REGULARIZATION"}
-              onClick={() => setExtDecision("NON_REGULARIZATION")}
+              onClick={() => {
+                setExtDecision("NON_REGULARIZATION");
+                setExtensionUntil(null);
+              }}
+            />
+            <DecisionButton
+              label="Extend Again"
+              variant="neutral"
+              selected={extDecision === "EXTENSION"}
+              onClick={() => setExtDecision("EXTENSION")}
             />
           </div>
         )}
       </div>
 
-      {/* Extension date picker — only when EXTENSION selected on 5th month */}
+      {/* Date picker — 5th month "Extend Probation" */}
       {milestone === "FIFTH_MONTH" && fifthDecision === "EXTENSION" && (
-        <div className="space-y-1.5">
-          <p className="text-sm font-medium">
-            Extension Until <span className="text-red-500">*</span>
-          </p>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !extensionUntil && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {extensionUntil ? format(extensionUntil, "MM/dd/yyyy") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start" autoFocus>
-              <Calendar
-                mode="single"
-                selected={extensionUntil ?? undefined}
-                onSelect={(d) => setExtensionUntil(d ?? null)}
-                disabled={(d) => d <= new Date()}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <ExtensionDatePicker
+          value={extensionUntil}
+          onChange={setExtensionUntil}
+        />
       )}
 
-      {/* Submit */}
-      <Button
-        className="w-full"
-        disabled={!canSubmit}
-        onClick={handleSubmit}
-      >
+      {/* Date picker — extension record "Extend Again" */}
+      {milestone === "EXTENSION" && extDecision === "EXTENSION" && (
+        <ExtensionDatePicker
+          value={extensionUntil}
+          onChange={setExtensionUntil}
+        />
+      )}
+
+      <Button className="w-full" disabled={!canSubmit} onClick={handleSubmit}>
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -207,6 +238,44 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
           "Submit"
         )}
       </Button>
+    </div>
+  );
+}
+
+function ExtensionDatePicker({
+  value,
+  onChange,
+}: {
+  value: Date | null;
+  onChange: (d: Date | null) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm font-medium">
+        Extension Until <span className="text-red-500">*</span>
+      </p>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !value && "text-muted-foreground",
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? format(value, "MM/dd/yyyy") : "Pick a date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start" autoFocus>
+          <Calendar
+            mode="single"
+            selected={value ?? undefined}
+            onSelect={(d) => onChange(d ?? null)}
+            disabled={(d) => d <= new Date()}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -224,7 +293,12 @@ interface DecisionButtonProps {
   onClick: () => void;
 }
 
-function DecisionButton({ label, variant, selected, onClick }: DecisionButtonProps) {
+function DecisionButton({
+  label,
+  variant,
+  selected,
+  onClick,
+}: DecisionButtonProps) {
   const base = "flex-1 min-w-fit text-sm border transition-colors";
   const styles: Record<string, string> = {
     positive: selected

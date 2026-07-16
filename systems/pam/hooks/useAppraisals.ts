@@ -6,6 +6,7 @@ import { appraisalsApi } from "@/systems/pam/lib/api/appraisals";
 import {
   getMilestoneTab,
   isMilestoneResolved,
+  isTerminal,
 } from "../lib/utils/appraisal-table";
 import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
 
@@ -31,12 +32,14 @@ export function useAppraisals() {
       getMilestoneTab(r) === "extension" &&
       !isMilestoneResolved(r, "extension_until"),
   );
+  const resolved = all.filter(isTerminal);
 
   return {
     all,
     third,
     fifth,
     extension,
+    resolved,
     isLoading: query.isLoading,
     isRefetching: query.isRefetching,
     error: query.error,

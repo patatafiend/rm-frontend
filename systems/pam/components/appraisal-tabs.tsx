@@ -9,15 +9,18 @@ interface Props {
   third: AppraisalRecord[];
   fifth: AppraisalRecord[];
   extension: AppraisalRecord[];
+  resolved: AppraisalRecord[];
 }
 
-export function AppraisalTabs({ third, fifth, extension }: Props) {
+export function AppraisalTabs({ third, fifth, extension, resolved }: Props) {
   const { activeTab, setActiveTab } = useAppraisalStore();
 
   return (
     <Tabs
       value={activeTab}
-      onValueChange={(v) => setActiveTab(v as "third" | "fifth" | "extension")}
+      onValueChange={(v) =>
+        setActiveTab(v as "third" | "fifth" | "extension" | "resolved")
+      }
     >
       <TabsList className="mb-4">
         <TabsTrigger value="third" className="gap-2">
@@ -31,6 +34,10 @@ export function AppraisalTabs({ third, fifth, extension }: Props) {
         <TabsTrigger value="extension" className="gap-2">
           Extension
           <TabCount count={extension.length} />
+        </TabsTrigger>
+        <TabsTrigger value="resolved" className="gap-2">
+          Resolved
+          <TabCount count={resolved.length} />
         </TabsTrigger>
       </TabsList>
 
@@ -55,6 +62,15 @@ export function AppraisalTabs({ third, fifth, extension }: Props) {
           records={extension}
           dueDateField="extension_until"
           dueDateLabel="Extension Until"
+        />
+      </TabsContent>
+
+      <TabsContent value="resolved">
+        <AppraisalTable
+          records={resolved}
+          dueDateField="third_month_due_date"
+          dueDateLabel="Resolved On"
+          resolvedOnly
         />
       </TabsContent>
     </Tabs>

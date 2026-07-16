@@ -35,16 +35,6 @@ export function getPageWindows(
   return result;
 }
 
-interface Props {
-  records: AppraisalRecord[];
-  dueDateField: DueDateField;
-  dueDateLabel: string;
-  /** Renders the terminal-status view instead of the pending/overdue milestone view. */
-  resolvedOnly?: boolean;
-}
-// Declared OUTSIDE AppraisalTable so these aren't recreated (and don't reset
-// their identity) on every render. They receive sortConfig/onSort as props
-// instead of closing over component-local state.
 export function SortIcon({
   column,
   sortConfig,

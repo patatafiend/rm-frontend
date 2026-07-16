@@ -6,7 +6,7 @@ import { AppraisalTabs } from "./appraisal-tabs";
 import { useAppraisals } from "@/systems/pam/hooks/useAppraisals";
 
 export function AppraisalsLoader() {
-  const { third, fifth, extension, isLoading, error } = useAppraisals();
+  const { third, fifth, extension, resolved, isLoading, error } = useAppraisals();
 
   if (isLoading) {
     return (
@@ -26,5 +26,5 @@ export function AppraisalsLoader() {
     );
   }
 
-  return <AppraisalTabs third={third} fifth={fifth} extension={extension} />;
+  return <AppraisalTabs third={third} fifth={fifth} extension={extension} resolved={resolved}/>;
 }

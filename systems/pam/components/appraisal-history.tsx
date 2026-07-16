@@ -1,12 +1,21 @@
 "use client";
 
-import { format, formatDistanceToNow, parseISO, differenceInCalendarDays } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  parseISO,
+  differenceInCalendarDays,
+} from "date-fns";
 import { Check, Clock, Minus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { appraisalsApi } from "@/systems/pam/lib/api/appraisals";
 import { toast } from "sonner";
-import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
+import type {
+  AppraisalRecord,
+  ExtensionRecord,
+} from "@/systems/pam/types/appraisal";
 import { cn } from "@/lib/utils";
+
 interface Props {
   record: AppraisalRecord;
 }
@@ -34,21 +43,37 @@ function formatDecision(decision?: string | null): string | null {
   return DECISION_LABELS[decision] ?? decision;
 }
 
+// Within an extension record, "EXTENSION" means "extend again" — different
+// wording than the 5th-month-level "Extend Probation".
+function formatExtensionDecision(decision?: string | null): string | null {
+  if (!decision) return null;
+  if (decision === "EXTENSION") return "Extend Again";
+  return DECISION_LABELS[decision] ?? decision;
+}
+
 function dueDateNote(dueRaw?: string | null): string {
   if (!dueRaw) return "";
   const days = differenceInCalendarDays(parseISO(dueRaw), new Date());
-  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) !== 1 ? "s" : ""} overdue`;
+  if (days < 0)
+    return `${Math.abs(days)} day${Math.abs(days) !== 1 ? "s" : ""} overdue`;
   if (days === 0) return "due today";
   return `due in ${days} day${days !== 1 ? "s" : ""}`;
 }
 
 async function openDownloadUrl(rmTranNo: number, fileKey: string) {
   try {
-    const { download_url } = await appraisalsApi.getDownloadUrl(rmTranNo, fileKey);
+    const { download_url } = await appraisalsApi.getDownloadUrl(
+      rmTranNo,
+      fileKey,
+    );
     window.open(download_url, "_blank", "noopener,noreferrer");
   } catch {
     toast.error("Could not retrieve download link.");
   }
+}
+
+function extensionStepLabel(ext: ExtensionRecord, total: number): string {
+  return total > 1 ? `Extension #${ext.sequence}` : "Extension";
 }
 
 export function AppraisalHistory({ record }: Props) {
@@ -56,9 +81,9 @@ export function AppraisalHistory({ record }: Props) {
   const fifthRelevant = thirdDone;
   const fifthDone = !!record.fifth_month_decision;
   const extensionRelevant = record.fifth_month_decision === "EXTENSION";
-  const extensionDone = !!record.extension_final_decision;
+  const extensionRecords = record.extension_records ?? [];
 
-  const steps: TimelineStep[] = [
+  const baseSteps: TimelineStep[] = [
     {
       label: "3rd Month",
       dueDate: record.third_month_due_date,
@@ -75,35 +100,57 @@ export function AppraisalHistory({ record }: Props) {
       fileKey: record.fifth_month_appraisal_file_key,
       status: !fifthRelevant ? "inactive" : fifthDone ? "done" : "pending",
     },
-    {
-      label: "Extension",
-      dueDate: record.extension_until,
-      decidedAt: record.extension_decided_at,
-      decisionLabel: formatDecision(record.extension_final_decision),
-      fileKey: null,
-      status: !extensionRelevant ? "inactive" : extensionDone ? "done" : "pending",
-    },
   ];
+
+  const extensionSteps: TimelineStep[] = extensionRelevant
+    ? extensionRecords.length > 0
+      ? extensionRecords.map((ext) => ({
+          label: extensionStepLabel(ext, extensionRecords.length),
+          dueDate: ext.extension_until,
+          decidedAt: ext.decided_at,
+          decisionLabel: formatExtensionDecision(ext.decision),
+          fileKey: ext.appraisal_file_key,
+          status: (ext.decision ? "done" : "pending") as StepStatus,
+        }))
+      : [
+          {
+            label: "Extension",
+            dueDate: null,
+            decidedAt: null,
+            decisionLabel: null,
+            fileKey: null,
+            status: "pending" as StepStatus,
+          },
+        ]
+    : [
+        {
+          label: "Extension",
+          
+          dueDate: null,
+          decidedAt: null,
+          decisionLabel: null,
+          fileKey: null,
+          status: "inactive" as StepStatus,
+        },
+      ];
+
+  const steps: TimelineStep[] = [...baseSteps, ...extensionSteps];
+  const lastStepIndex = steps.length - 1;
 
   return (
     <div className="flex flex-col">
       {steps.map((step, i) => (
-        <div key={step.label} className="flex gap-3">
-          {/* Icon + connector line */}
+        <div key={`${step.label}-${i}`} className="flex gap-3">
           <div className="flex flex-col items-center">
             <StepIcon status={step.status} />
             {i < steps.length - 1 && (
               <div
-                className={cn(
-                  "mt-1 w-px flex-1",
-                  step.status === "inactive" ? "bg-border" : "bg-border",
-                )}
+                className="mt-1 w-px flex-1 bg-border"
                 style={{ minHeight: 32 }}
               />
             )}
           </div>
 
-          {/* Content */}
           <div className="pb-6 pt-0.5 flex-1 min-w-0">
             <p
               className={cn(
@@ -120,7 +167,9 @@ export function AppraisalHistory({ record }: Props) {
             </p>
 
             {step.status === "inactive" && (
-              <p className="mt-0.5 text-xs text-muted-foreground">Not yet applicable.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Not yet applicable.
+              </p>
             )}
 
             {step.status === "pending" && (
@@ -134,13 +183,16 @@ export function AppraisalHistory({ record }: Props) {
               <div className="mt-1 space-y-1">
                 {step.decisionLabel && (
                   <p className="text-xs">
-                    <span className="font-medium">Decision:</span> {step.decisionLabel}
+                    <span className="font-medium">Decision:</span>{" "}
+                    {step.decisionLabel}
                   </p>
                 )}
                 {step.decidedAt && (
                   <p className="text-xs text-muted-foreground">
                     Submitted{" "}
-                    {formatDistanceToNow(parseISO(step.decidedAt), { addSuffix: true })}
+                    {formatDistanceToNow(parseISO(step.decidedAt), {
+                      addSuffix: true,
+                    })}
                     {" · "}
                     {format(parseISO(step.decidedAt), "MMM d, yyyy")}
                   </p>
@@ -150,7 +202,9 @@ export function AppraisalHistory({ record }: Props) {
                     variant="link"
                     size="sm"
                     className="h-auto p-0 text-xs"
-                    onClick={() => openDownloadUrl(record.rm_tran_no, step.fileKey!)}
+                    onClick={() =>
+                      openDownloadUrl(record.rm_tran_no, step.fileKey!)
+                    }
                   >
                     <Download className="mr-1 h-3 w-3" />
                     Download Appraisal File
@@ -159,10 +213,10 @@ export function AppraisalHistory({ record }: Props) {
               </div>
             )}
 
-            {/* Failsafe notice */}
-            {i === 2 && record.failsafe_triggered_at && (
+            {i === lastStepIndex && record.failsafe_triggered_at && (
               <p className="mt-1 text-xs font-medium text-red-600">
-                Fail-safe triggered {format(parseISO(record.failsafe_triggered_at), "MMM d, yyyy")}
+                Fail-safe triggered{" "}
+                {format(parseISO(record.failsafe_triggered_at), "MMM d, yyyy")}
               </p>
             )}
           </div>

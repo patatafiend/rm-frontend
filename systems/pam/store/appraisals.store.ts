@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AppraisalRecord } from "@/systems/pam/types/appraisal";
 
-type ActiveTab = "third" | "fifth" | "extension";
+type ActiveTab = "third" | "fifth" | "extension" | "resolved";
 
 interface AppraisalStore {
   selectedEmployee: AppraisalRecord | null;

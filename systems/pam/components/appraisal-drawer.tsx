@@ -11,12 +11,11 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { AppraisalHistory } from "./appraisal-history";
 import { AppraisalDecisionForm } from "./appraisal-decision-form";
 import { useAppraisalStore } from "@/systems/pam/store/appraisals.store";
 import { useAppraisalDetail } from "@/systems/pam/hooks/useAppraisalDetail";
-import { getActiveMilestone } from "@/systems/pam/types/appraisal";
+import { getActiveMilestone } from "../lib/utils/appraisal-table";
 
 export function AppraisalDrawer() {
   const { selectedEmployee, drawerOpen, setDrawerOpen } = useAppraisalStore();
