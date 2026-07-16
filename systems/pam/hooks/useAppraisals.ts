@@ -23,11 +23,11 @@ export function useAppraisals() {
   });
 
   const all: AppraisalRecord[] = query.data?.data ?? [];
+  const active = all.filter((r) => !isTerminal(r));
 
-  const third = all.filter((r) => getMilestoneTab(r) === "third");
-  const fifth = all.filter((r) => getMilestoneTab(r) === "fifth");
-  // Extension tab: only those with fifth_month_decision EXTENSION and no final decision yet
-  const extension = all.filter(
+  const third = active.filter((r) => getMilestoneTab(r) === "third");
+  const fifth = active.filter((r) => getMilestoneTab(r) === "fifth");
+  const extension = active.filter(
     (r) =>
       getMilestoneTab(r) === "extension" &&
       !isMilestoneResolved(r, "extension_until"),

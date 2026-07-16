@@ -225,6 +225,13 @@ export function AppraisalTable({
                 sortConfig={sortConfig}
                 onSort={handleSort}
               >
+                tran No. 
+              </SortableHead>
+              <SortableHead
+                column="employee"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              >
                 Employee
               </SortableHead>
               <SortableHead
@@ -287,6 +294,10 @@ export function AppraisalTable({
                     )}
                     onClick={() => setSelectedEmployee(record)}
                   >
+                    <TableCell className="font-medium">
+                      {record.rm_tran_no ??
+                        `${record.rm_tran_no ?? ""}, ${record.rm_tran_no ?? ""}`}
+                    </TableCell>
                     <TableCell className="font-medium">
                       {record.employee_name ??
                         `${record.rm_lastname ?? ""}, ${record.rm_first_name ?? ""}`}
