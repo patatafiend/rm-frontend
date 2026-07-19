@@ -106,8 +106,12 @@ export function isMilestoneResolved(
     // so a resolved extension is one whose latest decision is a final outcome.
     return !!latest?.decision && latest.decision !== "EXTENSION";
   }
-  if (field === "third_month_due_date") return !!record.third_month_decision;
-  if (field === "fifth_month_due_date") return !!record.fifth_month_decision;
+  if (field === "third_month_due_date") {
+    return !!record.third_month_decision && record.third_month_decision !== "NO_APPRAISAL";
+  }
+  if (field === "fifth_month_due_date") {
+    return !!record.fifth_month_decision && record.fifth_month_decision !== "NO_APPRAISAL";
+  }
   return false;
 }
 
@@ -149,7 +153,7 @@ export function getMilestoneTab(
   record: AppraisalRecord,
 ): "third" | "fifth" | "extension" {
   if (record.fifth_month_decision === "EXTENSION") return "extension";
-  if (record.third_month_decision === "PROCEED_5TH") return "fifth";
+  if (record.fifth_month_notified_at) return "fifth";
   return "third";
 }
 

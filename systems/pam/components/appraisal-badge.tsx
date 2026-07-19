@@ -71,19 +71,33 @@ const BADGE_DOTS: Record<BadgeVariant, string> = {
 
 export function AppraisalBadge({ record, dueDateField }: Props) {
   const variant = getVariant(record, dueDateField);
+  const missingThird = isMissingThirdMonthPA(record);
+  const missingFifth = isMissingFifthMonthPA(record);
+
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
-        BADGE_STYLES[variant],
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+          BADGE_STYLES[variant],
+        )}
+      >
+        <span className={cn("h-1.5 w-1.5 rounded-full", BADGE_DOTS[variant])} />
+        {BADGE_LABELS[variant]}
+      </span>
+      {missingThird && (
+        <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600 ring-1 ring-inset ring-red-200">
+          No 3rd Mo. PA
+        </span>
       )}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", BADGE_DOTS[variant])} />
-      {BADGE_LABELS[variant]}
+      {missingFifth && (
+        <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600 ring-1 ring-inset ring-red-200">
+          No 5th Mo. PA
+        </span>
+      )}
     </span>
   );
 }
-
 export function getDaysOverdue(
   record: AppraisalRecord,
   dueDateField: Props["dueDateField"],
@@ -92,4 +106,12 @@ export function getDaysOverdue(
   if (!dueRaw) return null;
   const days = differenceInCalendarDays(new Date(), parseISO(dueRaw));
   return days > 0 ? days : null;
+}
+
+export function isMissingThirdMonthPA(record: AppraisalRecord): boolean {
+  return record.third_month_decision == null && !!record.fifth_month_notified_at;
+}
+
+export function isMissingFifthMonthPA(record: AppraisalRecord): boolean {
+  return record.fifth_month_decision === "NO_APPRAISAL";
 }

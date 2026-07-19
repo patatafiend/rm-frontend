@@ -6,11 +6,12 @@ export type AppraisalStatus =
   | "NEEDS_REVIEW"
   | "RESOLVED_MANUAL";
 
-export type ThirdMonthDecision = "PROCEED_5TH" | "NON_REGULARIZATION";
+export type ThirdMonthDecision = "PROCEED_5TH" | "NON_REGULARIZATION" | "NO_APPRAISAL";
 export type FifthMonthDecision =
   | "REGULARIZATION"
   | "NON_REGULARIZATION"
-  | "EXTENSION";
+  | "EXTENSION"
+  | "NO_APPRAISAL";
 
 // "EXTENSION" here means "extend again" within an extension record
 export type ExtensionDecision =
@@ -63,6 +64,8 @@ export type AppraisalRecord = {
   fifth_month_appraisal_file_key?: string | null;
   fifth_month_decided_at?: string | null;
   fifth_month_notified_at?: string | null;
+
+  sixth_month_check_date?: string | null;
 
   // Replaces the old flat extension_until / extension_final_decision / extension_decided_at
   extension_records: ExtensionRecord[];
