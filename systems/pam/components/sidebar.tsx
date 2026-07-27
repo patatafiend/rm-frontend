@@ -29,9 +29,6 @@ export function PamSidebar() {
                 <span className="text-sm font-semibold text-foreground">
                   Performance Appraisals
                 </span>
-                <span className="text-[10px] text-muted-foreground">
-                  Probationary workflow
-                </span>
               </div>
             </div>
           </SidebarMenuItem>
