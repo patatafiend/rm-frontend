@@ -1,0 +1,329 @@
+diff --git a/app/(pam)/appraisals/[rm_tran_no]/pdf/page.tsx b/app/(pam)/appraisals/[employee_id]/pdf/page.tsx
+similarity index 62%
+rename from app/(pam)/appraisals/[rm_tran_no]/pdf/page.tsx
+rename to app/(pam)/appraisals/[employee_id]/pdf/page.tsx
+index f1b9565..0dbfb55 100644
+--- a/app/(pam)/appraisals/[rm_tran_no]/pdf/page.tsx
++++ b/app/(pam)/appraisals/[employee_id]/pdf/page.tsx
+@@ -6,11 +6,11 @@ import PerformanceEvaluationForm from "@/systems/pam/components/papdf";
+ export default function AppraisalPdfPage({
+   params,
+ }: {
+-  params: Promise<{ rm_tran_no: string }>;
++  params: Promise<{ employee_id: string }>;
+ }) {
+-  const { rm_tran_no } = use(params);
++  const { employee_id } = use(params);
+ 
+-  // rm_tran_no is available here if the form needs to be pre-filled
++  // employee_id is available here if the form needs to be pre-filled
+   // from a record lookup later on.
+   return <PerformanceEvaluationForm />;
+ }
+\ No newline at end of file
+diff --git a/systems/pam/components/appraisal-decision-form.tsx b/systems/pam/components/appraisal-decision-form.tsx
+index 5ce7a99..0bd023c 100644
+--- a/systems/pam/components/appraisal-decision-form.tsx
++++ b/systems/pam/components/appraisal-decision-form.tsx
+@@ -23,14 +23,14 @@ import type {
+ import { cn } from "@/lib/utils";
+ 
+ interface Props {
+-  rmTranNo: number;
++  employeeId: number;
+   milestone: Exclude<ActiveMilestone, "RESOLVED">;
+ }
+ 
+-export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
++export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
+   const { setDrawerOpen } = useAppraisalStore();
+   const { thirdMonth, fifthMonth, extension, isPending } =
+-    useSubmitDecision(rmTranNo);
++    useSubmitDecision(employeeId);
+ 
+   const [fileKey, setFileKey] = useState<string | null>(null);
+   const [thirdDecision, setThirdDecision] =
+@@ -116,7 +116,7 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
+               className="h-7 rounded-full bg-slate-800 px-4 text-xs font-medium text-white hover:bg-slate-700"
+               onClick={() =>
+                 window.open(
+-                  `/appraisals/${rmTranNo}/pdf`,
++                  `/appraisals/${employeeId}/pdf`,
+                   "_blank",
+                   "noopener,noreferrer",
+                 )
+@@ -126,7 +126,7 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
+             </Button>
+           </div>
+           <AppraisalFileUpload
+-            rmTranNo={rmTranNo}
++            employeeId={employeeId}
+             onUploadComplete={(key) => setFileKey(key)}
+             onReset={() => setFileKey(null)}
+           />
+diff --git a/systems/pam/components/appraisal-drawer.tsx b/systems/pam/components/appraisal-drawer.tsx
+index 25db9f4..0c39d67 100644
+--- a/systems/pam/components/appraisal-drawer.tsx
++++ b/systems/pam/components/appraisal-drawer.tsx
+@@ -20,8 +20,8 @@ import { getActiveMilestone } from "../lib/utils/appraisal-table";
+ export function AppraisalDrawer() {
+   const { selectedEmployee, drawerOpen, setDrawerOpen } = useAppraisalStore();
+ 
+-  const rmTranNo = selectedEmployee?.rm_tran_no ?? null;
+-  const { data: record, isLoading } = useAppraisalDetail(rmTranNo);
++  const employeeId = selectedEmployee?.employee_id ?? null;
++  const { data: record, isLoading } = useAppraisalDetail(employeeId);
+ 
+   // Merge list record (has basic fields) with detail record (has file keys + decided_at)
+   const display = record ?? selectedEmployee;
+@@ -117,7 +117,7 @@ export function AppraisalDrawer() {
+           {/* Section C — Action panel */}
+           {display && actionableMilestone && (
+             <AppraisalDecisionForm
+-              rmTranNo={display.rm_tran_no}
++              employeeId={display.employee_id}
+               milestone={actionableMilestone}
+             />
+           )}
+diff --git a/systems/pam/components/appraisal-history.tsx b/systems/pam/components/appraisal-history.tsx
+index 99ffc8e..2c64ec7 100644
+--- a/systems/pam/components/appraisal-history.tsx
++++ b/systems/pam/components/appraisal-history.tsx
+@@ -60,10 +60,10 @@ function dueDateNote(dueRaw?: string | null): string {
+   return `due in ${days} day${days !== 1 ? "s" : ""}`;
+ }
+ 
+-async function openDownloadUrl(rmTranNo: number, fileKey: string) {
++async function openDownloadUrl(employeeId: number, fileKey: string) {
+   try {
+     const { download_url } = await appraisalsApi.getDownloadUrl(
+-      rmTranNo,
++      employeeId,
+       fileKey,
+     );
+     window.open(download_url, "_blank", "noopener,noreferrer");
+@@ -203,7 +203,7 @@ export function AppraisalHistory({ record }: Props) {
+                     size="sm"
+                     className="h-auto p-0 text-xs"
+                     onClick={() =>
+-                      openDownloadUrl(record.rm_tran_no, step.fileKey!)
++                      openDownloadUrl(record.employee_id, step.fileKey!)
+                     }
+                   >
+                     <Download className="mr-1 h-3 w-3" />
+diff --git a/systems/pam/components/appraisal-table.tsx b/systems/pam/components/appraisal-table.tsx
+index 83f9717..bf7b263 100644
+--- a/systems/pam/components/appraisal-table.tsx
++++ b/systems/pam/components/appraisal-table.tsx
+@@ -225,7 +225,7 @@ export function AppraisalTable({
+                 sortConfig={sortConfig}
+                 onSort={handleSort}
+               >
+-                tran No. 
++                Employee ID
+               </SortableHead>
+               <SortableHead
+                 column="employee"
+@@ -287,7 +287,7 @@ export function AppraisalTable({
+ 
+                 return (
+                   <TableRow
+-                    key={record.rm_tran_no}
++                    key={record.employee_id}
+                     className={cn(
+                       "cursor-pointer transition-colors hover:bg-muted/50",
+                       terminal && "opacity-50",
+@@ -295,8 +295,7 @@ export function AppraisalTable({
+                     onClick={() => setSelectedEmployee(record)}
+                   >
+                     <TableCell className="font-medium">
+-                      {record.rm_tran_no ??
+-                        `${record.rm_tran_no ?? ""}, ${record.rm_tran_no ?? ""}`}
++                      {record.employee_id}
+                     </TableCell>
+                     <TableCell className="font-medium">
+                       {record.employee_name ??
+diff --git a/systems/pam/components/upload/appraisal-upload.tsx b/systems/pam/components/upload/appraisal-upload.tsx
+index 32205a8..57e4bc6 100644
+--- a/systems/pam/components/upload/appraisal-upload.tsx
++++ b/systems/pam/components/upload/appraisal-upload.tsx
+@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
+ import { useUploadUrl } from "@/systems/pam/hooks/useUploadUrl";
+ 
+ interface Props {
+-  rmTranNo: number;
++  employeeId: number;
+   onUploadComplete: (fileKey: string) => void;
+   onReset?: () => void;
+ }
+ 
+-export function AppraisalFileUpload({ rmTranNo, onUploadComplete, onReset }: Props) {
+-  const { upload, uploading, fileKey, fileName, error, reset } = useUploadUrl(rmTranNo);
++export function AppraisalFileUpload({ employeeId, onUploadComplete, onReset }: Props) {
++  const { upload, uploading, fileKey, fileName, error, reset } = useUploadUrl(employeeId);
+   const [dragOver, setDragOver] = useState(false);
+   const inputRef = useRef<HTMLInputElement>(null);
+ 
+diff --git a/systems/pam/hooks/useAppraisalDetail.ts b/systems/pam/hooks/useAppraisalDetail.ts
+index d182936..c0235e1 100644
+--- a/systems/pam/hooks/useAppraisalDetail.ts
++++ b/systems/pam/hooks/useAppraisalDetail.ts
+@@ -6,13 +6,13 @@ import { appraisalsApi } from "@/systems/pam/lib/api/appraisals";
+ 
+ const STALE_TIME = 2 * 60 * 1000;
+ 
+-export function useAppraisalDetail(rmTranNo: number | null) {
++export function useAppraisalDetail(employeeId: number | null) {
+   const { accessToken } = useAuthStore();
+ 
+   return useQuery({
+-    queryKey: ["pam", "detail", accessToken, rmTranNo],
+-    queryFn: () => appraisalsApi.detail(rmTranNo!),
++    queryKey: ["pam", "detail", accessToken, employeeId],
++    queryFn: () => appraisalsApi.detail(employeeId!),
+     staleTime: STALE_TIME,
+-    enabled: !!accessToken && !!rmTranNo,
++    enabled: !!accessToken && !!employeeId,
+   });
+ }
+\ No newline at end of file
+diff --git a/systems/pam/hooks/useSubmitDecision.ts b/systems/pam/hooks/useSubmitDecision.ts
+index 7adda7a..c378572 100644
+--- a/systems/pam/hooks/useSubmitDecision.ts
++++ b/systems/pam/hooks/useSubmitDecision.ts
+@@ -9,7 +9,7 @@ import type {
+   ThirdMonthPayload,
+ } from "@/systems/pam/types/appraisal";
+ 
+-export function useSubmitDecision(rmTranNo: number) {
++export function useSubmitDecision(employeeId: number) {
+   const queryClient = useQueryClient();
+ 
+   const invalidate = () =>
+@@ -17,7 +17,7 @@ export function useSubmitDecision(rmTranNo: number) {
+ 
+   const thirdMonth = useMutation({
+     mutationFn: (body: ThirdMonthPayload) =>
+-      appraisalsApi.submitThirdMonth(rmTranNo, body),
++      appraisalsApi.submitThirdMonth(employeeId, body),
+     onSuccess: () => {
+       invalidate();
+       toast.success("3rd month appraisal submitted.");
+@@ -28,7 +28,7 @@ export function useSubmitDecision(rmTranNo: number) {
+ 
+   const fifthMonth = useMutation({
+     mutationFn: (body: FifthMonthPayload) =>
+-      appraisalsApi.submitFifthMonth(rmTranNo, body),
++      appraisalsApi.submitFifthMonth(employeeId, body),
+     onSuccess: () => {
+       invalidate();
+       toast.success("5th month appraisal submitted.");
+@@ -39,7 +39,7 @@ export function useSubmitDecision(rmTranNo: number) {
+ 
+   const extension = useMutation({
+     mutationFn: (body: ExtensionPayload) =>
+-      appraisalsApi.submitExtension(rmTranNo, body),
++      appraisalsApi.submitExtension(employeeId, body),
+     onSuccess: () => {
+       invalidate();
+       toast.success("Extension decision recorded.");
+diff --git a/systems/pam/hooks/useUploadUrl.ts b/systems/pam/hooks/useUploadUrl.ts
+index 86b70bd..78a9db4 100644
+--- a/systems/pam/hooks/useUploadUrl.ts
++++ b/systems/pam/hooks/useUploadUrl.ts
+@@ -10,7 +10,7 @@ interface UploadState {
+   error: string | null;
+ }
+ 
+-export function useUploadUrl(rmTranNo: number) {
++export function useUploadUrl(employeeId: number) {
+   const [state, setState] = useState<UploadState>({
+     fileKey: null,
+     fileName: null,
+@@ -22,7 +22,7 @@ export function useUploadUrl(rmTranNo: number) {
+     setState((s) => ({ ...s, uploading: true, error: null }));
+     try {
+       const { upload_url, file_key } = await appraisalsApi.getUploadUrl(
+-        rmTranNo,
++        employeeId,
+         file.type,
+       );
+ 
+diff --git a/systems/pam/lib/api/appraisals.ts b/systems/pam/lib/api/appraisals.ts
+index 77ddee3..73eb5f1 100644
+--- a/systems/pam/lib/api/appraisals.ts
++++ b/systems/pam/lib/api/appraisals.ts
+@@ -17,35 +17,35 @@ export const appraisalsApi = {
+       .then(({ data }) => data);
+   },
+ 
+-  detail(rmTranNo: number): Promise<AppraisalListResponse["data"][number]> {
+-    return apiClient.get(`/appraisals/${rmTranNo}`).then(({ data }) => data);
++  detail(employeeId: number): Promise<AppraisalListResponse["data"][number]> {
++    return apiClient.get(`/appraisals/${employeeId}`).then(({ data }) => data);
+   },
+ 
+-  submitThirdMonth(rmTranNo: number, body: ThirdMonthPayload) {
++  submitThirdMonth(employeeId: number, body: ThirdMonthPayload) {
+     return apiClient
+-      .post(`/appraisals/${rmTranNo}/third-month`, body)
++      .post(`/appraisals/${employeeId}/third-month`, body)
+       .then(({ data }) => data);
+   },
+ 
+-  submitFifthMonth(rmTranNo: number, body: FifthMonthPayload) {
++  submitFifthMonth(employeeId: number, body: FifthMonthPayload) {
+     return apiClient
+-      .post(`/appraisals/${rmTranNo}/fifth-month`, body)
++      .post(`/appraisals/${employeeId}/fifth-month`, body)
+       .then(({ data }) => data);
+   },
+ 
+-  submitExtension(rmTranNo: number, body: ExtensionPayload) {
++  submitExtension(employeeId: number, body: ExtensionPayload) {
+     return apiClient
+-      .post(`/appraisals/${rmTranNo}/extension-decision`, body)
++      .post(`/appraisals/${employeeId}/extension-decision`, body)
+       .then(({ data }) => data);
+   },
+ 
+   getUploadUrl(
+-    rmTranNo: number,
++    employeeId: number,
+     contentType: string,
+   ): Promise<UploadUrlResponse> {
+     return apiClient
+       .post(
+-        `/appraisals/${rmTranNo}/upload-url`,
++        `/appraisals/${employeeId}/upload-url`,
+         {},
+         {
+           params: { contentType: contentType },
+@@ -55,11 +55,11 @@ export const appraisalsApi = {
+   },
+ 
+   getDownloadUrl(
+-    rmTranNo: number,
++    employeeId: number,
+     fileKey: string,
+   ): Promise<DownloadUrlResponse> {
+     return apiClient
+-      .get(`/appraisals/${rmTranNo}/files/${fileKey}/download-url`)
++      .get(`/appraisals/${employeeId}/files/${fileKey}/download-url`)
+       .then(({ data }) => data);
+   },
+ 
+diff --git a/systems/pam/types/appraisal.ts b/systems/pam/types/appraisal.ts
+index 5971d06..ec97435 100644
+--- a/systems/pam/types/appraisal.ts
++++ b/systems/pam/types/appraisal.ts
+@@ -41,8 +41,7 @@ export type ExtensionRecord = {
+ };
+ 
+ export type AppraisalRecord = {
+-  rm_tran_no: number;
+-  erms_id: number;
++  employee_id: number;
+   employee_name?: string;
+   rm_lastname?: string;
+   rm_first_name?: string;
