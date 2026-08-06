@@ -23,14 +23,14 @@ import type {
 import { cn } from "@/lib/utils";
 
 interface Props {
-  rmTranNo: number;
+  employeeId: number;
   milestone: Exclude<ActiveMilestone, "RESOLVED">;
 }
 
-export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
+export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
   const { setDrawerOpen } = useAppraisalStore();
   const { thirdMonth, fifthMonth, extension, isPending } =
-    useSubmitDecision(rmTranNo);
+    useSubmitDecision(employeeId);
 
   const [fileKey, setFileKey] = useState<string | null>(null);
   const [thirdDecision, setThirdDecision] =
@@ -116,7 +116,7 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
               className="h-7 rounded-full bg-slate-800 px-4 text-xs font-medium text-white hover:bg-slate-700"
               onClick={() =>
                 window.open(
-                  `/appraisals/${rmTranNo}/pdf`,
+                  `/appraisals/${employeeId}/pdf`,
                   "_blank",
                   "noopener,noreferrer",
                 )
@@ -126,7 +126,7 @@ export function AppraisalDecisionForm({ rmTranNo, milestone }: Props) {
             </Button>
           </div>
           <AppraisalFileUpload
-            rmTranNo={rmTranNo}
+            employeeId={employeeId}
             onUploadComplete={(key) => setFileKey(key)}
             onReset={() => setFileKey(null)}
           />

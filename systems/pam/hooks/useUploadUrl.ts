@@ -10,7 +10,7 @@ interface UploadState {
   error: string | null;
 }
 
-export function useUploadUrl(rmTranNo: number) {
+export function useUploadUrl(employeeId: number) {
   const [state, setState] = useState<UploadState>({
     fileKey: null,
     fileName: null,
@@ -22,7 +22,7 @@ export function useUploadUrl(rmTranNo: number) {
     setState((s) => ({ ...s, uploading: true, error: null }));
     try {
       const { upload_url, file_key } = await appraisalsApi.getUploadUrl(
-        rmTranNo,
+        employeeId,
         file.type,
       );
 

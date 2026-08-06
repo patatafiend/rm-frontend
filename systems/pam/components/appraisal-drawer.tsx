@@ -20,8 +20,8 @@ import { getActiveMilestone } from "../lib/utils/appraisal-table";
 export function AppraisalDrawer() {
   const { selectedEmployee, drawerOpen, setDrawerOpen } = useAppraisalStore();
 
-  const rmTranNo = selectedEmployee?.rm_tran_no ?? null;
-  const { data: record, isLoading } = useAppraisalDetail(rmTranNo);
+  const employeeId = selectedEmployee?.employee_id ?? null;
+  const { data: record, isLoading } = useAppraisalDetail(employeeId);
 
   // Merge list record (has basic fields) with detail record (has file keys + decided_at)
   const display = record ?? selectedEmployee;
@@ -117,7 +117,7 @@ export function AppraisalDrawer() {
           {/* Section C — Action panel */}
           {display && actionableMilestone && (
             <AppraisalDecisionForm
-              rmTranNo={display.rm_tran_no}
+              employeeId={display.employee_id}
               milestone={actionableMilestone}
             />
           )}

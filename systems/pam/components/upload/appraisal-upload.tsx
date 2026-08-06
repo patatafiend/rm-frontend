@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 import { useUploadUrl } from "@/systems/pam/hooks/useUploadUrl";
 
 interface Props {
-  rmTranNo: number;
+  employeeId: number;
   onUploadComplete: (fileKey: string) => void;
   onReset?: () => void;
 }
 
-export function AppraisalFileUpload({ rmTranNo, onUploadComplete, onReset }: Props) {
-  const { upload, uploading, fileKey, fileName, error, reset } = useUploadUrl(rmTranNo);
+export function AppraisalFileUpload({ employeeId, onUploadComplete, onReset }: Props) {
+  const { upload, uploading, fileKey, fileName, error, reset } = useUploadUrl(employeeId);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 

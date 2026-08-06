@@ -17,35 +17,35 @@ export const appraisalsApi = {
       .then(({ data }) => data);
   },
 
-  detail(rmTranNo: number): Promise<AppraisalListResponse["data"][number]> {
-    return apiClient.get(`/appraisals/${rmTranNo}`).then(({ data }) => data);
+  detail(employeeId: number): Promise<AppraisalListResponse["data"][number]> {
+    return apiClient.get(`/appraisals/${employeeId}`).then(({ data }) => data);
   },
 
-  submitThirdMonth(rmTranNo: number, body: ThirdMonthPayload) {
+  submitThirdMonth(employeeId: number, body: ThirdMonthPayload) {
     return apiClient
-      .post(`/appraisals/${rmTranNo}/third-month`, body)
+      .post(`/appraisals/${employeeId}/third-month`, body)
       .then(({ data }) => data);
   },
 
-  submitFifthMonth(rmTranNo: number, body: FifthMonthPayload) {
+  submitFifthMonth(employeeId: number, body: FifthMonthPayload) {
     return apiClient
-      .post(`/appraisals/${rmTranNo}/fifth-month`, body)
+      .post(`/appraisals/${employeeId}/fifth-month`, body)
       .then(({ data }) => data);
   },
 
-  submitExtension(rmTranNo: number, body: ExtensionPayload) {
+  submitExtension(employeeId: number, body: ExtensionPayload) {
     return apiClient
-      .post(`/appraisals/${rmTranNo}/extension-decision`, body)
+      .post(`/appraisals/${employeeId}/extension-decision`, body)
       .then(({ data }) => data);
   },
 
   getUploadUrl(
-    rmTranNo: number,
+    employeeId: number,
     contentType: string,
   ): Promise<UploadUrlResponse> {
     return apiClient
       .post(
-        `/appraisals/${rmTranNo}/upload-url`,
+        `/appraisals/${employeeId}/upload-url`,
         {},
         {
           params: { contentType: contentType },
@@ -55,11 +55,11 @@ export const appraisalsApi = {
   },
 
   getDownloadUrl(
-    rmTranNo: number,
+    employeeId: number,
     fileKey: string,
   ): Promise<DownloadUrlResponse> {
     return apiClient
-      .get(`/appraisals/${rmTranNo}/files/${fileKey}/download-url`)
+      .get(`/appraisals/${employeeId}/files/${fileKey}/download-url`)
       .then(({ data }) => data);
   },
 

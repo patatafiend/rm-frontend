@@ -60,10 +60,10 @@ function dueDateNote(dueRaw?: string | null): string {
   return `due in ${days} day${days !== 1 ? "s" : ""}`;
 }
 
-async function openDownloadUrl(rmTranNo: number, fileKey: string) {
+async function openDownloadUrl(employeeId: number, fileKey: string) {
   try {
     const { download_url } = await appraisalsApi.getDownloadUrl(
-      rmTranNo,
+      employeeId,
       fileKey,
     );
     window.open(download_url, "_blank", "noopener,noreferrer");
@@ -203,7 +203,7 @@ export function AppraisalHistory({ record }: Props) {
                     size="sm"
                     className="h-auto p-0 text-xs"
                     onClick={() =>
-                      openDownloadUrl(record.rm_tran_no, step.fileKey!)
+                      openDownloadUrl(record.employee_id, step.fileKey!)
                     }
                   >
                     <Download className="mr-1 h-3 w-3" />

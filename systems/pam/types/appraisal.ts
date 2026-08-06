@@ -41,8 +41,7 @@ export type ExtensionRecord = {
 };
 
 export type AppraisalRecord = {
-  rm_tran_no: number;
-  erms_id: number;
+  employee_id: number;
   employee_name?: string;
   rm_lastname?: string;
   rm_first_name?: string;

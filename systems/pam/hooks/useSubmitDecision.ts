@@ -9,7 +9,7 @@ import type {
   ThirdMonthPayload,
 } from "@/systems/pam/types/appraisal";
 
-export function useSubmitDecision(rmTranNo: number) {
+export function useSubmitDecision(employeeId: number) {
   const queryClient = useQueryClient();
 
   const invalidate = () =>
@@ -17,7 +17,7 @@ export function useSubmitDecision(rmTranNo: number) {
 
   const thirdMonth = useMutation({
     mutationFn: (body: ThirdMonthPayload) =>
-      appraisalsApi.submitThirdMonth(rmTranNo, body),
+      appraisalsApi.submitThirdMonth(employeeId, body),
     onSuccess: () => {
       invalidate();
       toast.success("3rd month appraisal submitted.");
@@ -28,7 +28,7 @@ export function useSubmitDecision(rmTranNo: number) {
 
   const fifthMonth = useMutation({
     mutationFn: (body: FifthMonthPayload) =>
-      appraisalsApi.submitFifthMonth(rmTranNo, body),
+      appraisalsApi.submitFifthMonth(employeeId, body),
     onSuccess: () => {
       invalidate();
       toast.success("5th month appraisal submitted.");
@@ -39,7 +39,7 @@ export function useSubmitDecision(rmTranNo: number) {
 
   const extension = useMutation({
     mutationFn: (body: ExtensionPayload) =>
-      appraisalsApi.submitExtension(rmTranNo, body),
+      appraisalsApi.submitExtension(employeeId, body),
     onSuccess: () => {
       invalidate();
       toast.success("Extension decision recorded.");
