@@ -1,7 +1,6 @@
 "use client";
 
 import { formatDistanceStrict, parseISO } from "date-fns";
-import { X } from "lucide-react";
 import {
   Sheet,
   SheetContent,

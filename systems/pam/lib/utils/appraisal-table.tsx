@@ -169,6 +169,6 @@ export function getActiveMilestone(record: AppraisalRecord): ActiveMilestone {
   // Stays "EXTENSION" for as long as ANY extension record is unresolved —
   // works the same whether it's the 1st or the nth extension.
   if (record.fifth_month_decision === "EXTENSION") return "EXTENSION";
-  if (record.third_month_decision === "PROCEED_5TH") return "FIFTH_MONTH";
+  if (record.fifth_month_notified_at) return "FIFTH_MONTH";
   return "THIRD_MONTH";
 }
