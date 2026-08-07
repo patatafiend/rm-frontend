@@ -43,8 +43,6 @@ function formatDecision(decision?: string | null): string | null {
   return DECISION_LABELS[decision] ?? decision;
 }
 
-// Within an extension record, "EXTENSION" means "extend again" — different
-// wording than the 5th-month-level "Extend Probation".
 function formatExtensionDecision(decision?: string | null): string | null {
   if (!decision) return null;
   if (decision === "EXTENSION") return "Extend Again";

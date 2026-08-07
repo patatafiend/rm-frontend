@@ -18,7 +18,7 @@ import type {
   ActiveMilestone,
   ThirdMonthDecision,
   FifthMonthDecision,
-  ExtensionDecision,
+  ExtensionResolutionDecision,
 } from "@/systems/pam/types/appraisal";
 import { cn } from "@/lib/utils";
 
@@ -37,17 +37,15 @@ export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
     useState<ThirdMonthDecision | null>(null);
   const [fifthDecision, setFifthDecision] =
     useState<FifthMonthDecision | null>(null);
-  const [extDecision, setExtDecision] = useState<ExtensionDecision | null>(
-    null,
-  );
+  const [extDecision, setExtDecision] =
+    useState<ExtensionResolutionDecision | null>(null);
   const [extensionUntil, setExtensionUntil] = useState<Date | null>(null);
 
-  // No file needed when the decision itself is an "extend" step —
-  // applies both at 5th month ("Extend Probation") and within an
-  // extension record ("Extend Again").
-  const needsFile =
-    !(milestone === "FIFTH_MONTH" && fifthDecision === "EXTENSION") &&
-    !(milestone === "EXTENSION" && extDecision === "EXTENSION");
+  // No file needed when the decision itself is an "extend" step — only
+  // possible at 5th month ("Extend Probation"). Resolving an existing
+  // extension record always requires a file since only one extension is
+  // allowed per employee, so there's no "extend again" step anymore.
+  const needsFile = !(milestone === "FIFTH_MONTH" && fifthDecision === "EXTENSION");
   const fileReady = !needsFile || !!fileKey;
 
   const decisionReady =
@@ -55,9 +53,7 @@ export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
     (milestone === "FIFTH_MONTH" &&
       !!fifthDecision &&
       (fifthDecision !== "EXTENSION" || !!extensionUntil)) ||
-    (milestone === "EXTENSION" &&
-      !!extDecision &&
-      (extDecision !== "EXTENSION" || !!extensionUntil));
+    (milestone === "EXTENSION" && !!extDecision);
 
   const canSubmit = fileReady && decisionReady && !isPending;
 
@@ -81,17 +77,10 @@ export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
           ? { extension_until: format(extensionUntil, "yyyy-MM-dd") }
           : {}),
       });
-    } else if (
-      milestone === "EXTENSION" &&
-      extDecision &&
-      (extDecision === "EXTENSION" || fileKey)
-    ) {
+    } else if (milestone === "EXTENSION" && extDecision && fileKey) {
       await extension.mutateAsync({
         decision: extDecision,
-        appraisal_file_key: fileKey ?? undefined,
-        ...(extDecision === "EXTENSION" && extensionUntil
-          ? { extension_until: format(extensionUntil, "yyyy-MM-dd") }
-          : {}),
+        appraisal_file_key: fileKey,
       });
     }
 
@@ -188,25 +177,13 @@ export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
               label="Regularize"
               variant="positive"
               selected={extDecision === "REGULARIZATION"}
-              onClick={() => {
-                setExtDecision("REGULARIZATION");
-                setExtensionUntil(null);
-              }}
+              onClick={() => setExtDecision("REGULARIZATION")}
             />
             <DecisionButton
               label="Non-Regularization"
               variant="negative"
               selected={extDecision === "NON_REGULARIZATION"}
-              onClick={() => {
-                setExtDecision("NON_REGULARIZATION");
-                setExtensionUntil(null);
-              }}
-            />
-            <DecisionButton
-              label="Extend Again"
-              variant="neutral"
-              selected={extDecision === "EXTENSION"}
-              onClick={() => setExtDecision("EXTENSION")}
+              onClick={() => setExtDecision("NON_REGULARIZATION")}
             />
           </div>
         )}
@@ -214,14 +191,6 @@ export function AppraisalDecisionForm({ employeeId, milestone }: Props) {
 
       {/* Date picker — 5th month "Extend Probation" */}
       {milestone === "FIFTH_MONTH" && fifthDecision === "EXTENSION" && (
-        <ExtensionDatePicker
-          value={extensionUntil}
-          onChange={setExtensionUntil}
-        />
-      )}
-
-      {/* Date picker — extension record "Extend Again" */}
-      {milestone === "EXTENSION" && extDecision === "EXTENSION" && (
         <ExtensionDatePicker
           value={extensionUntil}
           onChange={setExtensionUntil}

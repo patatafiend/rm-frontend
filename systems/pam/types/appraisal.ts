@@ -13,11 +13,14 @@ export type FifthMonthDecision =
   | "EXTENSION"
   | "NO_APPRAISAL";
 
-// "EXTENSION" here means "extend again" within an extension record
 export type ExtensionDecision =
   | "REGULARIZATION"
   | "NON_REGULARIZATION"
   | "EXTENSION";
+
+export type ExtensionResolutionDecision =
+  | "REGULARIZATION"
+  | "NON_REGULARIZATION";
 
 export type FailsafeReason =
   | "NO_3RD_MONTH_APPRAISAL"
@@ -87,9 +90,8 @@ export interface FifthMonthPayload {
 }
 
 export interface ExtensionPayload {
-  decision: ExtensionDecision;
+  decision: ExtensionResolutionDecision;
   appraisal_file_key?: string;
-  extension_until?: string;
 }
 
 export interface AppraisalListResponse {

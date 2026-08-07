@@ -73,8 +73,6 @@ export function getResolvedDate(record: AppraisalRecord): string | null {
       null
     );
   }
-  // RESOLVED_MANUAL has no dedicated timestamp in the current schema —
-  // falling back to confirmed_at. Flag: confirm this is actually correct.
   return record.confirmed_at ?? null;
 }
 
@@ -102,8 +100,6 @@ export function isMilestoneResolved(
 ): boolean {
   if (field === "extension_until") {
     const latest = getLatestExtension(record);
-    // "EXTENSION" decision means "extend again" — a new record gets created,
-    // so a resolved extension is one whose latest decision is a final outcome.
     return !!latest?.decision && latest.decision !== "EXTENSION";
   }
   if (field === "third_month_due_date") {
@@ -166,8 +162,8 @@ export function getActiveMilestone(record: AppraisalRecord): ActiveMilestone {
   ) {
     return "RESOLVED";
   }
-  // Stays "EXTENSION" for as long as ANY extension record is unresolved —
-  // works the same whether it's the 1st or the nth extension.
+  // Stays "EXTENSION" for as long as the (single) extension record is
+  // unresolved.
   if (record.fifth_month_decision === "EXTENSION") return "EXTENSION";
   if (record.fifth_month_notified_at) return "FIFTH_MONTH";
   return "THIRD_MONTH";
